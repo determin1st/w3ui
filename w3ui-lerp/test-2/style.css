@@ -1,0 +1,48 @@
+div {
+  box-sizing: border-box;
+  position: relative;
+}
+#main {
+  width: 100vw;
+  height: 100vh;
+}
+#main > .container {
+  height: 33.333%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+#main > .container .info {
+  position: absolute;
+  top: 0;
+  left: 0;
+  padding: 12px;
+  font-family: monospace;
+  font-size: 16px;
+}
+#main > .container .box {
+  width: 100px;
+  height: 100px;
+  background-color: #1e90ff;
+}
+#main > .container .box.red-state {
+  width: 200px;
+  background-color: red;
+}
+#main > .container .box.green-state {
+  height: 200px;
+  background-color: green;
+}
+#main > .container > .boxMod {
+  width: 100px;
+  height: 100px;
+  background-color: #1e90ff;
+}
+#main > .container > .boxMod.green-state {
+  height: 200px;
+  background-color: green;
+}
+#main > .container > .boxMod.green-state.red-state {
+  width: 200px;
+  background-color: red;
+}

@@ -1,0 +1,207 @@
+@font-face {
+  font-family: 'uiMolot';
+  src: url('Molot.woff2') format('woff2'), url('Molot.woff') format('woff');
+}
+body {
+  display: flex;
+  margin: 0;
+  color: hsla(277, 100%, 18%, 1);
+  --body-color: hsla(230, 100%, 93%, 1);
+  background-color: var(--body-color);
+}
+div {
+  box-sizing: border-box;
+  position: relative;
+}
+img {
+  width: 100%;
+}
+.spacer {
+  width: 20px;
+}
+#ui {
+  width: 100%;
+  padding: 20px 10px;
+  font-family: uiMolot;
+  --front-color: white;
+  --back-color: white;
+  --start-color: blue;
+  --end-color: magenta;
+}
+#ui .h1,
+#ui .h2,
+#ui .h3 {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: uiMolot;
+  font-size: 32px;
+}
+#ui .h1 p,
+#ui .h2 p,
+#ui .h3 p {
+  margin: 0;
+  padding: 0;
+}
+#ui .h2 {
+  font-size: 24px;
+}
+#ui .h3 {
+  font-size: 18px;
+}
+#ui .spacer {
+  min-height: 20px;
+  width: 100%;
+}
+#ui .info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+#ui .ctl {
+  display: flex;
+  height: 32px;
+}
+#ui .ctl .start,
+#ui .ctl .end {
+  width: 33%;
+  height: 100%;
+  font-family: uiMolot;
+  font-size: 16px;
+  border-style: solid;
+  border-width: 0px;
+  text-align: center;
+  background-color: var(--back-color);
+}
+#ui .ctl .start {
+  color: var(--start-color);
+}
+#ui .ctl .end {
+  color: var(--end-color);
+}
+#ui .ctl .progress {
+  width: 34%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: transparent;
+}
+#ui .box {
+  display: flex;
+  align-items: center;
+  background-color: var(--back-color);
+  padding: 10px;
+}
+#ui .box .start,
+#ui .box .end {
+  width: 80px;
+  height: 200px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 48px;
+  color: var(--back-color);
+  user-select: none;
+  -moz-user-select: none;
+  cursor: pointer;
+}
+#ui .box .start {
+  background-color: var(--start-color);
+  color: var(--end-color);
+}
+#ui .box .start.tested {
+  color: var(--start-color);
+}
+#ui .box .end {
+  background-color: var(--end-color);
+  color: var(--end-color);
+}
+#ui .box .end.tested {
+  color: var(--start-color);
+}
+#ui .box .current {
+  width: 100%;
+}
+#ui .box .current .red,
+#ui .box .current .green {
+  width: 100%;
+  height: 140px;
+  background-color: var(--start-color);
+  color: var(--back-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+#ui .box .current .red.tested,
+#ui .box .current .green.tested {
+  background-color: var(--end-color);
+}
+#ui .preset {
+  display: flex;
+  background-color: var(--back-color);
+  padding-bottom: 10px;
+}
+#ui .preset .front,
+#ui .preset .back {
+  height: 100%;
+  font-family: uiMolot;
+  font-size: 16px;
+}
+#ui .preset .front {
+  width: 70%;
+  padding-left: 10px;
+  display: flex;
+  flex-wrap: wrap;
+}
+#ui .preset .front .item {
+  height: 22px;
+  display: flex;
+  cursor: pointer;
+}
+#ui .preset .front .item .start {
+  width: 22px;
+  background-color: var(--start-color);
+}
+#ui .preset .front .item .end {
+  width: 10px;
+  background-color: var(--end-color);
+  margin-right: 2px;
+}
+#ui .preset .back {
+  width: 30%;
+  display: flex;
+  padding-right: 10px;
+  justify-content: flex-end;
+}
+#ui .preset .back > div {
+  height: 22px;
+  width: 20%;
+  margin-left: 4px;
+  cursor: pointer;
+}
+#ui .preset .back .white {
+  background-color: white;
+}
+#ui .preset .back .gray {
+  background-color: gray;
+}
+#ui .preset .back .black {
+  background-color: black;
+}
+#ui .preset .back .transparent {
+  background-color: var(--body-color);
+}
+#ui .graphBox {
+  display: flex;
+}
+#ui .graph {
+  flex: 1 1;
+  width: 100%;
+  height: 400px;
+  background-color: var(--back-color);
+}
+#ui .graph.R,
+#ui .graph.G,
+#ui .graph.B {
+  flex: 1 1;
+}

@@ -1,0 +1,142 @@
+@font-face {
+  font-family: 'xkcd';
+  src: url('xkcd-script.woff') format('woff');
+}
+body {
+  display: flex;
+  margin: 0;
+  color: hsla(277, 100%, 18%, 1);
+  --text-color: hsla(277, 100%, 18%, 1);
+  --body-color: hsla(230, 100%, 90%, 1);
+  background-color: var(--body-color);
+  font-family: xkcd;
+}
+div {
+  box-sizing: border-box;
+  position: relative;
+}
+#ui {
+  width: 100%;
+  padding: 10px;
+  --box-color: hsla(230, 100%, 95%, 1);
+}
+#ui .h1,
+#ui .h2,
+#ui .h3 {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32px;
+}
+#ui .h1 p,
+#ui .h2 p,
+#ui .h3 p {
+  font-size: 16px;
+  margin: 0;
+  padding: 0;
+}
+#ui .h2 {
+  font-size: 24px;
+}
+#ui .h3 {
+  font-size: 18px;
+}
+#ui .spacer {
+  min-height: 20px;
+  width: 100%;
+}
+#ui p {
+  padding: 0 20px 10px 20px;
+  margin: 0;
+}
+#ui select {
+  font-family: xkcd;
+  font-size: 16px;
+  color: var(--text-color);
+  background-color: var(--body-color);
+  border: none;
+  height: 100%;
+}
+#ui .ctl {
+  height: 32px;
+  display: flex;
+}
+#ui .ctl > div {
+  min-width: 120px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding-left: 10px;
+  border: 1px solid var(--box-color);
+  overflow: hidden;
+}
+#ui .ctl > div span {
+  white-space: nowrap;
+}
+#ui .ctl > div select {
+  min-width: 100px;
+  padding: 0 4px 0 0;
+  font-weight: 700;
+  color: black;
+  cursor: pointer;
+}
+#ui .ctl .opts {
+  min-width: 0;
+  padding: 0;
+}
+#ui .ctl .opts > div {
+  display: none;
+}
+#ui .ctl .opts > div.active {
+  display: flex;
+}
+#ui .ctl .btn {
+  flex: 1 1;
+  max-width: 100%;
+  display: none;
+  padding: 0;
+  font-weight: 700;
+  font-size: 16px;
+  cursor: pointer;
+  transition: All 0.2s ease-in-out;
+}
+#ui .ctl .btn.ready {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+#ui .ctl .btn.active {
+  background-color: var(--box-color);
+  font-size: 18px;
+  cursor: default;
+}
+#ui .box {
+  width: 100%;
+  height: 600px;
+  padding: 10px;
+  background-color: var(--box-color);
+}
+#ui .box .renderBox {
+  width: 100%;
+  height: 100%;
+  line-height: 0;
+}
+#ui .box .renderBox .projectile {
+  display: inline-block;
+  position: relative;
+  width: 8px;
+  height: 8px;
+  border: 1px solid white;
+  background-color: red;
+}
+#ui .box .renderBox.ready .projectile {
+  background-color: green;
+}
+#ui .info {
+  width: 100%;
+  padding: 10px 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}

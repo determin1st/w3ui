@@ -1,0 +1,133 @@
+@font-face {
+  font-family: 'uiMolot';
+  src: url('xkcd-script.woff') format('woff');
+}
+@font-face {
+  font-family: 'SourceCodePro';
+  src: url('SourceCodePro.woff') format('woff');
+}
+body {
+  display: flex;
+  margin: 0;
+  color: hsla(277, 100%, 18%, 1);
+  --body-color: hsla(230, 100%, 90%, 1);
+  background-color: var(--body-color);
+}
+div {
+  box-sizing: border-box;
+  position: relative;
+}
+img {
+  width: 100%;
+}
+.spacer {
+  width: 20px;
+}
+#ui {
+  width: 100%;
+  padding: 10px;
+  font-family: uiMolot;
+  --box-color: hsla(230, 100%, 95%, 1);
+}
+#ui .h1,
+#ui .h2,
+#ui .h3 {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: uiMolot;
+  font-size: 32px;
+}
+#ui .h1 p,
+#ui .h2 p,
+#ui .h3 p {
+  margin: 0;
+  padding: 0;
+}
+#ui .h2 {
+  font-size: 24px;
+}
+#ui .h3 {
+  font-size: 18px;
+}
+#ui .spacer {
+  min-height: 20px;
+  width: 100%;
+}
+#ui .box {
+  position: relative;
+  width: 100%;
+  height: 210px;
+  padding: 0 0 0 5%;
+  cursor: pointer;
+  background-color: green;
+}
+#ui .box.tested {
+  background-color: red;
+}
+#ui .box .projectile {
+  position: absolute;
+  width: 40px;
+  height: 40px;
+  border: 1px solid white;
+  background-color: green;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+#ui .box .projectile.n1 {
+  top: 10px;
+}
+#ui .box .projectile.n2 {
+  top: 60px;
+}
+#ui .box .projectile.n3 {
+  top: 110px;
+}
+#ui .box .projectile.n4 {
+  top: 160px;
+}
+#ui .box .projectile.tested {
+  right: 5%;
+}
+#ui .ctl {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+#ui .ctl .variant {
+  height: 30px;
+  padding: 5px;
+  border: 1px solid var(--box-color);
+  white-space: nowrap;
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+#ui .ctl .variant.selected {
+  background-color: var(--box-color);
+}
+#ui .code {
+  width: 100%;
+  background-color: var(--box-color);
+  padding: 10px;
+}
+#ui .code pre {
+  width: 100%;
+  margin: 0;
+}
+#ui .code pre code {
+  font-family: SourceCodePro;
+  font-weight: 700;
+}
+#ui .info {
+  width: 100%;
+  padding: 10px 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}

@@ -1,6 +1,2 @@
-examples/
-tests/
 *.swp
 *.vim
-*.js
-*.css

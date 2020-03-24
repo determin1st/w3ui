@@ -1,0 +1,35 @@
+div {
+  box-sizing: border-box;
+}
+.testbox {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  height: 100vh;
+}
+.box {
+  width: 400px;
+  height: auto;
+  border: 4px solid red;
+  padding: 4px;
+}
+.box.clicked {
+  padding: 0;
+}
+.box .el {
+  width: 100%;
+  height: 50px;
+  padding: 20px;
+  cursor: pointer;
+  background-color: #3264c8;
+  color: #96fab4;
+  font-size: 32px;
+  font-weight: bold;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.box .el.clicked {
+  height: 300px;
+  padding: 0;
+}
