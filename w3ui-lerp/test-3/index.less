@@ -1,0 +1,36 @@
+div {
+  box-sizing: border-box; // use content-box instead of border-box
+}
+.testbox {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  height: 100vh;
+}
+.box {
+  width: 400px;
+  height: auto;
+  border: 4px solid red;
+  padding: 4px;
+  &.clicked {
+    padding: 0;
+  }
+  .el {
+    width: 100%;
+    height: 50px;
+    padding: 20px;
+    &.clicked {
+      height: 300px;
+      padding: 0;
+    }
+    ////
+    cursor: pointer;
+    background-color: rgb(50, 100, 200);
+    color: rgb(150, 250, 180);
+    font-size: 32px;
+    font-weight: bold;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+}

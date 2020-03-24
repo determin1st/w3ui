@@ -1,0 +1,159 @@
+// CSSv3 {{{
+@font-face
+{
+  font-family: 'xkcd';
+  src: url('xkcd-script.woff') format('woff');
+}
+html
+{
+  width: 100vw;
+  height: 100vh;
+}
+body
+{
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  color: ~'hsla(277, 100%, 18%, 1)';
+  background-color: ~'hsla(230, 100%, 90%, 1)';
+  font-family: xkcd;
+}
+div
+{
+  box-sizing: border-box;
+  position: relative;
+}
+// }}}
+#ui
+{
+  // {{{
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  width: 100%;
+  height: 100%;
+  padding: 10px;
+  .h1, .h2, .h3
+  {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 32px;
+  }
+  .h2 {font-size: 24px;}
+  .h3 {font-size: 18px;}
+  .spacer
+  {
+    min-height: 10px;
+    width: 100%;
+  }
+  // }}}
+  .box
+  {
+    width: 100%;
+    background-color: ~'hsla(230, 100%, 95%, 1)';
+    &.n1 // {{{
+    {
+      height: 400px;
+      --n1-x: 0px;
+      --n1-y: 0px;
+      --n1-w: 60px;
+      --n1-h: 60px;
+      --n2-x: 60px;
+      --n2-y: 60px;
+      --n2-w: 120px;
+      --n2-h: 120px;
+      .container
+      {
+        position: absolute;
+        border: 4px solid green;
+        &.n1 {
+          left:   var(--n1-x);
+          top:    var(--n1-y);
+          width:  var(--n1-w);
+          height: var(--n1-h);
+        }
+        &.n2 {
+          left:   var(--n2-x);
+          top:    var(--n2-y);
+          width:  var(--n2-w);
+          height: var(--n2-h);
+        }
+        &.free {
+          cursor: grab;
+          border-color: red;
+        }
+        &.resizeX  {cursor: ew-resize;}
+        &.resizeY  {cursor: ns-resize;}
+        &.drag {
+          cursor: grabbing;
+        }
+      }
+      .projectile
+      {
+        position: absolute;
+        background-color: green;
+        cursor: pointer;
+        left:   calc(var(--n1-x) + 10px);
+        top:    calc(var(--n1-y) + 10px);
+        width:  calc(var(--n1-w) - 20px);
+        height: calc(var(--n1-h) - 20px);
+        &.tested
+        {
+          left:   calc(var(--n2-x) + 10px);
+          top:    calc(var(--n2-y) + 10px);
+          width:  calc(var(--n2-w) - 20px);
+          height: calc(var(--n2-h) - 20px);
+        }
+      }
+    }
+    // }}}
+    &.n2 // {{{
+    {
+      padding: 10px;
+      line-height: 0;
+      .projectile
+      {
+        display: inline-block;
+        background-color: green;
+        height: 20px;
+        cursor: pointer;
+        &.n1
+        {
+          width: 40%;
+          &.tested {width: 25%;}
+        }
+        &.n2
+        {
+          width: 20%;
+          background-color: pink;
+          &.tested {width: 50%;}
+        }
+        &.n3
+        {
+          width: 10%;
+          &.tested {width: 20%;}
+        }
+        &.n4
+        {
+          background-color: pink;
+          width: 80%;
+          &.tested {width: 60%;}
+        }
+        &.n5
+        {
+          width: 15%;
+          &.tested {width: 49%;}
+        }
+        &.n6
+        {
+          background-color: pink;
+          width: 70%;
+          &.tested {width: 2%;}
+        }
+      }
+    }
+    // }}}
+  }
+}
+// vim: set fdm=marker:

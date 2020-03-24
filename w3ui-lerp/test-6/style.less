@@ -1,0 +1,147 @@
+// CSSv3 {{{
+@font-face
+{
+    font-family: 'uiMolot';
+    src: url('xkcd-script.woff') format('woff');
+}
+@font-face
+{
+    font-family: 'SourceCodePro';
+    src: url('SourceCodePro.woff') format('woff');
+}
+html {}
+body {
+    display: flex;
+    margin: 0;
+    color: ~'hsla(277, 100%, 18%, 1)';
+    --body-color: ~'hsla(230, 100%, 90%, 1)';
+    background-color: var(--body-color);
+}
+div
+{
+  box-sizing: border-box;
+  position: relative;
+}
+img
+{
+    width: 100%;
+}
+.spacer {width: 20px;}
+// }}}
+////
+#ui
+{
+    width: 100%;
+    padding: 10px;
+    font-family: uiMolot;
+    --box-color: ~'hsla(230, 100%, 95%, 1)';
+    ////
+    // {{{
+    .h1, .h2, .h3 {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-family: uiMolot;
+        font-size: 32px;
+        p {
+            margin: 0;
+            padding: 0;
+        }
+    }
+    .h2 {
+        font-size: 24px;
+    }
+    .h3 {
+        font-size: 18px;
+    }
+    .spacer {
+        min-height: 20px;
+        width: 100%;
+    }
+    // }}}
+    ////
+    .box // {{{
+    {
+        position: relative;
+        width: 100%;
+        height: 210px;
+        padding: 0 0 0 5%;
+        cursor: pointer;
+        background-color: green;
+        &.tested
+        {
+          background-color: red;
+        }
+        .projectile
+        {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            border: 1px solid white;
+            background-color: green;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            &.n1 {top: 10px;}
+            &.n2 {top: 60px;}
+            &.n3 {top: 110px;}
+            &.n4 {top: 160px;}
+            &.tested
+            {
+                right: 5%;
+            }
+        }
+    }
+    // }}}
+    .ctl // {{{
+    {
+        width: 100%;
+        display: flex;
+        justify-content: center;
+        flex-wrap: wrap;
+        .variant
+        {
+            height: 30px;
+            padding: 5px;
+            border: 1px solid var(--box-color);
+            white-space: nowrap;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            &.selected {
+                background-color: var(--box-color);
+            }
+        }
+    }
+    // }}}}
+    .code // {{{
+    {
+        width: 100%;
+        background-color: var(--box-color);
+        padding: 10px;
+        pre
+        {
+            code {
+                font-family: SourceCodePro;
+                font-weight: 700;
+            }
+            width: 100%;
+            margin: 0;
+        }
+    }
+    // }}}}
+    .info // {{{
+    {
+        width: 100%;
+        padding: 10px 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+    }
+    // }}}}
+}
+
+// vim: fdm=marker:

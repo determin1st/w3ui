@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en" >
+<head>
+  <meta charset="UTF-8">
+  <title>Animation Engine Timing</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="ui">
+    <div class="h1">Animation Engine Timing</div>
+    <div class="spacer"></div>
+    <div class="ctl">
+      <div>
+        <span>Engine:</span><select class="engine" autocomplete="off">
+          <option value="popmotion">Popmotion v8.3</option>
+          <option value="jquery">jQuery v3</option>
+          <option value="transit">jQuery.transit v0.9</option>
+          <option value="velocity">Velocity.js v2</option>
+          <option value="anime">anime v2.2</option>
+          <option value="greensock">GreenSock v2.0.1</option>
+          <option value="redsock" selected="selected">RedSock</option>
+        </select>
+      </div>
+      <div>
+        <span>boxCount:</span><select class="boxes" autocomplete="off">
+          <option value="500">500</option>
+          <option value="1000">1000</option>
+          <option value="2000">2000</option>
+          <option value="4000" selected="selected">4000</option>
+          <option value="8000">8000</option>
+        </select>
+      </div>
+      <div>
+        <span>stagger:</span><select class="stagger" autocomplete="off">
+          <option value="0">none</option>
+          <option value="0.001" selected="selected">slight</option>
+          <option value="0.005">moderate</option>
+          <option value="0.02">large</option>
+        </select>
+      </div>
+      <div class="opts">
+        <div class="greensock">
+          <input type="checkbox" class="opt" checked="checked" autocomplete="off">
+          <span>lagSmoothing, threshold:</span>
+          <select class="opt" autocomplete="off">
+              <option value="20">20</option>
+              <option value="50">50</option>
+              <option value="100">100</option>
+              <option value="200">200</option>
+              <option value="300">300</option>
+              <option value="500" selected="selected">500 (default)</option>
+              <option value="1000">1000</option>
+              <option value="0">none</option>
+          </select>
+          <span>&nbsp;adjustedLag:</span><select class="opt" autocomplete="off">
+              <option value="0">0</option>		
+              <option value="16">16</option>
+              <option value="33" selected="selected">33 (default)</option>
+              <option value="50">50</option>
+              <option value="100">100</option>
+              <option value="200">200</option>
+              <option value="300">300</option>
+              <option value="500">500</option>
+              <option value="1000">1000</option>
+          </select>
+        </div>
+        <div class="redsock">
+          <span>&nbsp;minFPS:</span>
+          <select class="opt" autocomplete="off">
+              <option value="0">0</option>
+              <option value="4" selected="selected">4 (greensock's default)</option>
+              <option value="10">10 (default)</option>
+              <option value="15">15</option>
+              <option value="20">20</option>
+              <option value="30">30</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div class="box">
+      <div class="renderBox"></div>
+    </div>
+    <div class="ctl">
+      <div class="btn n1 ready"></div>
+      <div class="btn n2">Run</div>
+      <div class="btn n3"></div>
+    </div>
+    <div class="spacer"></div>
+    <div class="h2">Info</div>
+    <div class="info">
+      <p>The test lets you to create a staggered animation in
+      which the boxes fall down linearly and the staggering should be
+      uniform across them all. If you see odd spacing/clumping,
+      it means that the relative timing of the tweens changed (lost sync).
+      Add/reduce boxes to change the stress level.</p>
+      <p><span style="color:green">greensock</span>:
+      This test helps illuminate how an engine handles timing,
+      frame drops, and synchronization. A very common technique is
+      to check pending tweens on each tick, find any that should have
+      started (and haven't yet), and fire 'em off starting "now".
+      While that may help eliminate initial jumps caused by lags in
+      the frame rate, it also prevents animations from staying in sync
+      and can lead to clumping. GSAP, on the other hand, has always
+      prioritized perfect synchronization and with the new lagSmoothing
+      feature, it recovers from lags in the frame rate by adjusting a
+      single value in the core timing mechanism (rather than shifting
+      individual tweens independently).</p>
+      <p><span style="color:red">redsock</span>:
+      The test <u>doesn't use transforms</u> to animate movement of the boxes.
+      This way, it differs from the original test, puting engines into equal conditions.
+      You can trigger the Lag pushing the button during the test.
+      Construction of redsock objects is always delayed by design.
+      It takes time to parse and apply options, and, may be forced by
+      immediate play()'ing or set()'ting animation.
+      The redsock intents to separate construction and running stages (i.e. reuse animation objects where possible).
+      The greensock, on the contrary, stands for on-the-fly construction and playing.
+      </p>
+    </div>
+    <div class="spacer"></div>
+    <div class="h2">Links</div>
+    <div class="info">
+      <a href="https://en.wikipedia.org/wiki/Lag">What is Lag?</a>
+      <a href="https://greensock.com/gsap-1-12-0">greensock lagSmoothing</a>
+      <a href="https://codepen.io/GreenSock/pen/e3ac33404937de0eb77c789323367da8">Original test</a>
+      <a href="https://developer.mozilla.org/en-US/docs/Tools/Performance/Frame_rate">Why redsock uses FPS?</a>
+    </div>
+    <div class="spacer"></div>
+  </div>
+  <script src='jquery.min.js'></script>
+  <script src='jquery.transit.min.js'></script>
+  <script src='velocity.min.js'></script>
+  <script src='anime.js'></script>
+  <script src='popmotion.min.js'></script>
+  <script src='TweenMax.js'></script>
+  <script src="../redsock.js"></script>
+  <!--
+  //-->
+  <script src="index.js"></script>
+</body>
+</html>
+

@@ -1,0 +1,71 @@
+div {
+  box-sizing: border-box;
+  position: relative;
+}
+////
+// w3ui APP uses IDs only at render points
+#main
+{
+    width: 100vw;
+    height: 100vh;
+    ////
+    // with blocks, style cascade reflects the rendered data.
+    // these styles, override any default theming.
+    ////
+    > .container
+    {
+        height: 33.333%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        ////
+        ////
+        .info
+        {
+            position: absolute;
+            top: 0;
+            left: 0;
+            padding: 12px;
+            font-family: monospace;
+            font-size: 16px;
+        }
+        .box
+        {
+            width: 100px;
+            height: 100px;
+            background-color: #1e90ff;
+            &.red-state
+            {
+                width: 200px;
+                background-color: red;
+            }
+            &.green-state
+            {
+                height: 200px;
+                background-color: green;
+            }
+        }
+        ////
+        // you have to know, what visual state combinations are possible,
+        // what is their order etc.. or, you failed.
+        ////
+        > .boxMod
+        {
+            width: 100px;
+            height: 100px;
+            background-color: #1e90ff;
+            &.green-state
+            {
+                height: 200px;
+                background-color: green;
+                &.red-state
+                {
+                    width: 200px;
+                    background-color: red;
+                }
+            }
+        }
+    }
+}
+
+
