@@ -1,0 +1,45 @@
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN">
+<html>
+<head>
+
+	<META NAME="VPSiteProject" CONTENT="file:///C|/Bretl%20Site%20copy/BretlSite.vpp"><meta name="generator" content = "HyperText Studio from Olson Software (http://www.olsonsoft.com)">
+<meta name="formatter" content = "HyperText Studio from Olson Software (http://www.olsonsoft.com)">
+<title>PES Packets and Elementary Streams</title>
+<style><!-- body { }
+H1{}
+H6{}
+H5{}
+H3{}
+H2{}
+P{}
+H4{}
+.DefaultParagraphFont{}
+ --></style>
+</head>
+<body>
+<BANNER>
+
+<p><font size="5" face="Arial"><span class="DefaultParagraphFont" style="font-size: 16pt;"><b>PES Packets and Elementary Streams</b></span></font><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;"></span></font></p></BANNER>
+
+<p><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;">A video ES, or video elementary stream, consists of all the video data for a </span></font><a href="sequence.HTM"><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;">sequence</span></font></a><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;">, including the sequence header and all the subparts of a sequence. An ES carries only one type of data (video or audio) from a single video or audio encoder.</span></font></p>
+<p><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;">A packetized elementary stream, or PES, consists of a single ES which has been made into packets, each starting with an added packet header. &nbsp;A PES stream contains only one type of data from one source, e.g. from one video or audio encoder.</span></font></p>
+<p><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;">PES packets have variable length, not corresponding to the fixed packet length of transport packets, and may be much longer than a transport packet. &nbsp;When transport packets are formed from a PES stream, the PES header is always placed at the beginning of a transport packet payload, immediately following the transport packet header. &nbsp;The remaining PES packet content fills the payloads of successive transport packets until the PES packet is all used. &nbsp;The final transport packet is filled to a fixed length by stuffing with &nbsp;bytes = 0xFF (all ones).</span></font></p>
+<p><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;">Each PES packet header includes an 8-bit stream ID identifying the source of the payload. &nbsp;Among other things, the PES packet header may also contain timing references: </span></font><a href="PTS.HTM"><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;">PTS</span></font></a><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;"> (presentation time stamp, the time at which a decoded audio or video access unit is to be presented by the decoder); </span></font><a href="DTS.HTM"><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;">DTS</span></font></a><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;"> (decoding time stamp, the time at which an access unit is decoded by the decoder); ESCR (elementary stream clock reference). &nbsp;</span></font></p>
+<p><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;">ATSC further constrains PES packets for video:</span></font><ul type="disc"><li>
+<p style="text-indent:0px;margin-left:0px;"><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;">Every video PES packet begins with the beginning of a video </span></font><a href="index94.HTM" target="popup"><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;">access unit</span></font></a><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;">. </span></font></li><li>
+<p style="text-indent:0px;margin-left:0px;"><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;">For terrestrial broadcast, each PES packet contains no more than one coded video frame (may contain one or two coded fields or one frame). &nbsp;</span></font></li><li>
+<p style="text-indent:0px;margin-left:0px;"><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;">Every PES header contains a PTS.</span></font></li><li>
+<p style="text-indent:0px;margin-left:0px;"><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;">A PES packet devoid of video information must include the discontinuity_indicator to signal that the continuity_counter may be discontinuous.</span></font></li></ul>
+<H2 class="Heading2">&nbsp;</H2>
+<H2 class="Heading2"><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;">MPEG 2 Video Data Structures Topics:</span></font></H2>
+<p><font size="4" face="Times New Roman"><span class="DefaultParagraphFont" style="font-size: 12pt;"><b>- </b></span></font><a href="index118.HTM" target="popup"><font size="4" face="Times New Roman"><span class="DefaultParagraphFont" style="font-size: 12pt;">PIXEL</span></font></a><font size="4" face="Times New Roman"><span class="DefaultParagraphFont" style="font-size: 12pt;"><b> </b></span></font></p>
+<p><font size="4" face="Times New Roman"><span class="DefaultParagraphFont" style="font-size: 12pt;">- </span></font><a href="block.HTM"><font size="4" face="Times New Roman"><span class="DefaultParagraphFont" style="font-size: 12pt;">BLOCK</span></font></a><font size="4" face="Times New Roman"><span class="DefaultParagraphFont" style="font-size: 12pt;"> </span></font></p>
+<p><font size="4" face="Times New Roman"><span class="DefaultParagraphFont" style="font-size: 12pt;">- </span></font><a href="macroblk.HTM"><font size="4" face="Times New Roman"><span class="DefaultParagraphFont" style="font-size: 12pt;">MACROBLOCK</span></font></a><font size="4" face="Times New Roman"><span class="DefaultParagraphFont" style="font-size: 12pt;"><b> </b></span></font></p>
+<p>- <a href="fldfrm.HTM"><font size="4" face="Times New Roman"><span class="DefaultParagraphFont" style="font-size: 12pt;">Field DCT Coding and Frame DCT Coding</span></font></a></p>
+<p><font size="4" face="Times New Roman"><span class="DefaultParagraphFont" style="font-size: 12pt;">- </span></font><a href="slice.HTM"><font size="4" face="Times New Roman"><span class="DefaultParagraphFont" style="font-size: 12pt;">SLICE</span></font></a><font size="4" face="Times New Roman"><span class="DefaultParagraphFont" style="font-size: 12pt;"><b> </b></span></font></p>
+<p><font size="4" face="Times New Roman"><span class="DefaultParagraphFont" style="font-size: 12pt;">- </span></font><a href="picture.HTM"><font size="4" face="Times New Roman"><span class="DefaultParagraphFont" style="font-size: 12pt;">PICTURE</span></font></a><font size="4" face="Times New Roman"><span class="DefaultParagraphFont" style="font-size: 12pt;"><b> </b></span></font></p>
+<p><font size="4" face="Times New Roman"><span class="DefaultParagraphFont" style="font-size: 12pt;">- </span></font><a href="GOP.HTM"><font size="4" face="Times New Roman"><span class="DefaultParagraphFont" style="font-size: 12pt;">GROUP of PICTURES (GOP)</span></font></a><font size="4" face="Times New Roman"><span class="DefaultParagraphFont" style="font-size: 12pt;"><b> </b></span></font></p>
+<p><font size="4" face="Times New Roman"><span class="DefaultParagraphFont" style="font-size: 12pt;">- </span></font><a href="sequence.HTM"><font size="4" face="Times New Roman"><span class="DefaultParagraphFont" style="font-size: 12pt;">SEQUENCE</span></font></a><font size="4" face="Times New Roman"><span class="DefaultParagraphFont" style="font-size: 12pt;"><b> </b></span></font></p>
+<p><font size="4" face="Times New Roman"><span class="DefaultParagraphFont" style="font-size: 12pt;">- PACKETIZED ELEMENTARY STREAM</span></font></p>
+<p><a href="vidstruc.HTM"><font size="4" face="Times New Roman"><span class="DefaultParagraphFont" style="font-size: 12pt;">Up to MPEG 2 Video Data Structures</span></font></a></p></body>
+</html>

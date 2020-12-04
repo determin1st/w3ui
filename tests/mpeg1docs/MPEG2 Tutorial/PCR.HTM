@@ -1,0 +1,31 @@
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN">
+<html>
+<head>
+
+	<META NAME="VPSiteProject" CONTENT="file:///C|/Bretl%20Site%20copy/BretlSite.vpp"><meta name="generator" content = "HyperText Studio from Olson Software (http://www.olsonsoft.com)">
+<meta name="formatter" content = "HyperText Studio from Olson Software (http://www.olsonsoft.com)">
+<title>PCR - Program Clock Reference</title>
+<style><!-- body { }
+H1{}
+H6{}
+H5{}
+H3{}
+H2{}
+P{}
+H4{}
+.DefaultParagraphFont{}
+ --></style>
+</head>
+<body>
+<BANNER>
+
+<p><font size="5" face="Arial"><span class="DefaultParagraphFont" style="font-size: 16pt;"><b>PCR - Program Clock Reference</b></span></font><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;"></span></font></p></BANNER>
+
+<p><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;">Synchronization of the receiver System Time Clock (STC) with the transmitter STC depends on transmitting PCRs through a constant-delay portion of the system. &nbsp;Thus, PCRs are inserted following the encoder buffer and extracted before the receiver buffer. PCRs are inserted with a maximum interval of 100ms. </span></font></p>
+<p><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;">Synchronization can be adversely affected by transmission over links having a variable delay or time jitter, and the accuracy of clock recovery must be studied if such an application is contemplated. </span></font></p>
+<p><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;">PCRs are also affected by the multiplexing of multiple program streams. &nbsp;In this case, &nbsp;there is additional buffering in the multiplexer, and it may become necessary to re-stamp the PCR values of data that is transmitted earlier or later than expected. &nbsp;Although the MPEG standards provide the means to maintain synchronization in this case, they do not specify the jitter limits, suggesting only that it is &quot;intended&quot; to be +/-4 ms maximum in a well-designed system.</span></font></p>
+<p><a href="timemdl.HTM">Previous: Timing Model</a></p>
+<p><a href="STC.HTM">Next: STC - System Time Clock</a></p>
+<p><a href="timebuf.HTM">Up to Timing and Buffer Control</a></p>
+<p>&nbsp;</p></body>
+</html>

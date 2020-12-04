@@ -1,0 +1,51 @@
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN">
+<html>
+<head>
+
+	<META NAME="VPSiteProject" CONTENT="file:///C|/Bretl%20Site%20copy/BretlSite.vpp"><meta name="generator" content = "HyperText Studio from Olson Software (http://www.olsonsoft.com)">
+<meta name="formatter" content = "HyperText Studio from Olson Software (http://www.olsonsoft.com)">
+<title>Field DCT Coding and Frame DCT Coding</title>
+<style><!-- body { }
+H5{}
+H2{}
+H3{}
+H6{}
+H4{}
+H1{}
+P{}
+.DefaultParagraphFont{}
+ --></style>
+</head>
+<body>
+<BANNER>
+
+<p><font size="5" face="Arial"><span class="DefaultParagraphFont" style="font-size: 16pt;"><b>Field DCT Coding and Frame DCT Coding</b></span></font><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;"></span></font></p></BANNER>
+
+<p><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;">Field DCT coding and frame DCT coding differ according to the contents of the blocks that make up a macroblock. </span></font></p>
+<p>&nbsp;</p>
+<p><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;">In a frame coded macroblock, the four blocks each come from the same </span></font><a href="index109.HTM" target="popup"><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;">frame</span></font></a><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;"> of video. </span></font></p>
+<p>&nbsp;</p>
+<p><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;">In a field coded macroblock, there are two possibilities: </span></font></p>
+<p style="margin-left:28px;"><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;"><i>either </i></span></font><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;">all four blocks come from a given </span></font><a href="index108.HTM" target="popup"><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;">field</span></font></a><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;"> of video, </span></font></p>
+<p style="margin-left:28px;"><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;"><i>or</i></span></font><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;"> two blocks come from one field and two from another field.</span></font></p>
+<p>&nbsp;</p>
+<p><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;">In </span></font><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;"><i>frame coded</i></span></font><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;"> macroblocks, the macroblock consists of a 16x16 spatial area taken from a progressive sequence frame, or from an interlaced sequence frame having both fields in place.  The four blocks that compose the macroblock consist of the upper right, upper left, lower right, and lower left blocks of 8x8 pixels taken from the 16x16 macroblock. In other words, the blocks are all from the same frame; if the sequence is interlaced, each of the four blocks contains lines from both fields.</span></font></p>
+<p>&nbsp;</p>
+<p><font size="4" face="Arial"><span class="DefaultParagraphFont" style="font-size: 12pt;"><b>Progressive sequences: FRAME DCT ONLY</b></span></font></p>
+<p style="margin-left:28px;"><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;">For progressive sequences, </span></font><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;"><i>all </i></span></font><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;">pictures are frame pictures with frame DCT coded macroblocks only.</span></font></p>
+<p>&nbsp;</p>
+<p><font size="4" face="Arial"><span class="DefaultParagraphFont" style="font-size: 12pt;"><b>Interlaced sequences: FRAME or FIELD DCT</b></span></font></p>
+<p style="margin-left:28px;"><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;">Field DCT coding can be applied only to interlaced sequences.</span></font></p>
+<p style="margin-left:28px;"><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;">For interlaced sequences, the encoder may decide on a frame by frame basis to use a frame picture or two field pictures. </span></font></p>
+<p>&nbsp;<ul type="disc"><li>
+<p style="text-indent:0px;margin-left:0px;"><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;"><b>In the case of a field picture, all the blocks in every macroblock come from one field, </b></span></font><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;">that is, there are only field coded macroblocks and no frame coded macroblocks.</span></font><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;"><b></b></span></font></li></ul>
+<p style="margin-left:28px;">&nbsp;<ul type="disc"><li>
+<p style="text-indent:0px;margin-left:0px;"><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;"><b>In the case of an (interlaced) frame picture, the decision to use frame or field DCT coding is made on a macroblock-by-macroblock basis.</b></span></font><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;"></span></font></li></ul>
+<p>&nbsp;</p>
+<p style="text-indent:-24px;margin-left:72px;"><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;">-<tab>If the interlaced macroblock from an interlaced frame picture is frame DCT coded, each of its four blocks has pixels from both fields.   </span></font></p>
+<p style="margin-left:48px;">&nbsp;</p>
+<p style="text-indent:-24px;margin-left:72px;"><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;">-<tab>If the interlaced macroblock from an interlaced frame picture is field coded, each block consists of pixels from only one of the two fields.  Each 16x16 macroblock is split into fields 16 pixels wide x 8 pixels high by taking alternating lines of pixels, then each field is split into left and right parts, making two 8x8 blocks from one field and two from the other field. </span></font></p>
+<p style="margin-left:48px;">&nbsp;</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p></body>
+</html>

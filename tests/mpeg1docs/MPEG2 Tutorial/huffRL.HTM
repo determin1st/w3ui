@@ -1,0 +1,53 @@
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN">
+<html>
+<head>
+
+	<META NAME="VPSiteProject" CONTENT="file:///C|/Bretl%20Site%20copy/BretlSite.vpp"><meta name="generator" content = "HyperText Studio from Olson Software (http://www.olsonsoft.com)">
+<meta name="formatter" content = "HyperText Studio from Olson Software (http://www.olsonsoft.com)">
+<title>Huffman/Run-Level Coding</title>
+<style><!-- body { }
+H1{}
+H6{}
+H5{}
+H3{}
+H2{}
+P{}
+H4{}
+.DefaultParagraphFont{}
+ --></style>
+</head>
+<body>
+<BANNER>
+
+<p><font size="5" face="Arial"><span class="DefaultParagraphFont" style="font-size: 16pt;"><b>Huffman/Run-Level Coding</b></span></font><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;"></span></font></p></BANNER>
+
+<p><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;">In MPEG, Huffman coding in combination with Run-Level coding and </span></font><a href="index129.HTM" target="popup"><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;">zig-zag scanning</span></font></a><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;"> is applied to quantized DCT coefficients. &quot;Run-Level&quot; refers to a run-length of zeros followed by a non-zero level. &nbsp;Huffman coding is also applied to various types of &nbsp;</span></font><a href="index123.HTM" target="popup"><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;">side information.</span></font></a></p>
+<p><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;">A Huffman code is an </span></font><a href="index105.HTM" target="popup"><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;">entropy code</span></font></a><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;"> that is optimum in the sense that it achieves the shortest average possible code word length for a source. This average code word length is &gt;= the </span></font><a href="index104.HTM" target="popup"><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;">entropy</span></font></a><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;"> of the source.</span></font></p>
+<p><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;">A typical 8x8 block of quantized DCT coefficients is shown below. Most of the higher order coefficients have been quantized to 0. &nbsp;&nbsp;</span></font></p>
+<p>&nbsp;</p>
+<p><font size="3" face="Courier New"><span class="DefaultParagraphFont" style="font-size: 9pt;">12 &nbsp;&nbsp;34 &nbsp;&nbsp;&nbsp;0 &nbsp;&nbsp;54 &nbsp;&nbsp;&nbsp;0 &nbsp;&nbsp;&nbsp;0 &nbsp;&nbsp;&nbsp;0 &nbsp;&nbsp;&nbsp;0</span></font></p>
+<p><font size="3" face="Courier New"><span class="DefaultParagraphFont" style="font-size: 9pt;">87 &nbsp;&nbsp;&nbsp;0 &nbsp;&nbsp;&nbsp;0 &nbsp;&nbsp;12 &nbsp;&nbsp;&nbsp;0 &nbsp;&nbsp;&nbsp;0 &nbsp;&nbsp;&nbsp;0 &nbsp;&nbsp;&nbsp;0</span></font></p>
+<p><font size="3" face="Courier New"><span class="DefaultParagraphFont" style="font-size: 9pt;">16 &nbsp;&nbsp;&nbsp;0 &nbsp;&nbsp;&nbsp;0 &nbsp;&nbsp;&nbsp;0 &nbsp;&nbsp;&nbsp;0 &nbsp;&nbsp;&nbsp;0 &nbsp;&nbsp;&nbsp;0 &nbsp;&nbsp;&nbsp;0</span></font></p>
+<p><font size="3" face="Courier New"><span class="DefaultParagraphFont" style="font-size: 9pt;"> 0 &nbsp;&nbsp;&nbsp;0 &nbsp;&nbsp;&nbsp;0 &nbsp;&nbsp;&nbsp;0 &nbsp;&nbsp;&nbsp;0 &nbsp;&nbsp;&nbsp;0 &nbsp;&nbsp;&nbsp;0 &nbsp;&nbsp;&nbsp;0</span></font></p>
+<p><font size="3" face="Courier New"><span class="DefaultParagraphFont" style="font-size: 9pt;"> 0 &nbsp;&nbsp;&nbsp;0 &nbsp;&nbsp;&nbsp;0 &nbsp;&nbsp;&nbsp;0 &nbsp;&nbsp;&nbsp;0 &nbsp;&nbsp;&nbsp;0 &nbsp;&nbsp;&nbsp;0 &nbsp;&nbsp;&nbsp;0</span></font></p>
+<p><font size="3" face="Courier New"><span class="DefaultParagraphFont" style="font-size: 9pt;"> 0 &nbsp;&nbsp;&nbsp;0 &nbsp;&nbsp;&nbsp;0 &nbsp;&nbsp;&nbsp;0 &nbsp;&nbsp;&nbsp;0 &nbsp;&nbsp;&nbsp;0 &nbsp;&nbsp;&nbsp;0 &nbsp;&nbsp;&nbsp;0</span></font></p>
+<p><font size="3" face="Courier New"><span class="DefaultParagraphFont" style="font-size: 9pt;"> 0 &nbsp;&nbsp;&nbsp;0 &nbsp;&nbsp;&nbsp;0 &nbsp;&nbsp;&nbsp;0 &nbsp;&nbsp;&nbsp;0 &nbsp;&nbsp;&nbsp;0 &nbsp;&nbsp;&nbsp;0 &nbsp;&nbsp;&nbsp;0</span></font></p>
+<p><font size="3" face="Courier New"><span class="DefaultParagraphFont" style="font-size: 9pt;"> 0 &nbsp;&nbsp;&nbsp;0 &nbsp;&nbsp;&nbsp;0 &nbsp;&nbsp;&nbsp;0 &nbsp;&nbsp;&nbsp;0 &nbsp;&nbsp;&nbsp;0 &nbsp;&nbsp;&nbsp;0 &nbsp;&nbsp;&nbsp;0</span></font></p>
+<p>&nbsp;</p>
+<p><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;">After </span></font><a href="index129.HTM" target="popup"><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;">zig-zag scanning</span></font></a><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;"> &nbsp;the sequence of DCT coefficients to be transmitted looks like:</span></font></p>
+<p><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;">12 34 87 16 0 0 54 0 0 0 0 0 0 12 0 0 3 0 0 0 .....</span></font></p>
+<p><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;">The DC coefficient (12) is sent via a separate Huffman table.</span></font></p>
+<p><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;">After Run-Level parsing, the remaining coefficients and associated runs of zeros are:</span></font></p>
+<p><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;"> 34 | 87 | 16 | 0 0 54 | 0 0 0 0 0 0 12 | 0 0 3 | 0 0 0 .....</span></font></p>
+<p><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;">When examining large amounts of video data encoded in this manner, common run-level sequences have been found. These common sequences are encoded with relatively short code words and are permanently stored in a table in the decoder. A special end of block codeword indicates that all subsequent quantized DCT coefficients in the 8x8 block are 0.</span></font></p>
+<p><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;">Less common sequences that are not encoded in this manner (because they are not in the Huffman table) are indicated with an escape sequence.</span></font></p>
+<p>&nbsp;</p>
+<H2 class="Heading2">Compression Tools Topics:</H2>
+<p><a href="quantiz.HTM"><font size="4" face="Arial"><span class="DefaultParagraphFont" style="font-size: 12pt;">MPEG 2 Quantization</span></font></a></p>
+<p><a href="mpredic.HTM"><font size="4" face="Arial"><span class="DefaultParagraphFont" style="font-size: 12pt;">MPEG 2 Prediction</span></font></a></p>
+<p><a href="DCxfrm.HTM"><font size="4" face="Arial"><span class="DefaultParagraphFont" style="font-size: 12pt;">Discrete Cosine Transform</span></font></a></p>
+<p><font size="4" face="Arial"><span class="DefaultParagraphFont" style="font-size: 12pt;">Huffman/Run-Level Coding</span></font></p>
+<p><a href="zigzag.HTM"><font size="4" face="Arial"><span class="DefaultParagraphFont" style="font-size: 12pt;">Zig-Zag Scanning Patterns</span></font></a></p>
+<p>&nbsp;</p>
+<p><a href="mpeg2vc.HTM">Up to MPEG 2 Video Compression Topics</a></p></body>
+</html>

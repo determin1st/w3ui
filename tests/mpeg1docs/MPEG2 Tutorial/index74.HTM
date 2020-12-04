@@ -1,0 +1,67 @@
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN">
+<html>
+<head>
+
+	<META NAME="VPSiteProject" CONTENT="file:///C|/Bretl%20Site%20copy/BretlSite.vpp"><meta name="generator" content = "HyperText Studio from Olson Software (http://www.olsonsoft.com)">
+<meta name="formatter" content = "HyperText Studio from Olson Software (http://www.olsonsoft.com)">
+<title>Synchronization Loop Model</title>
+<style><!-- body { }
+H5{}
+H2{}
+H3{}
+H6{}
+H4{}
+H1{}
+P{}
+.DefaultParagraphFont{}
+ --></style>
+</head>
+<body>
+<BANNER>
+
+<p><font size="5" face="Arial"><span class="DefaultParagraphFont" style="font-size: 16pt;"><b>Synchronization Loop Model</b></span></font><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;"></span></font></p></BANNER>
+
+<p><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;">The basic synchronizer consists of a first order feedback loop. &nbsp;Each incoming PCR is subtracted from the receiver STC counter, and the filtered difference (times a proportionality constant) is the control voltage for a crystal VCO. &nbsp;This loop stabilizes with the correct frequency, but with an offset in STC that is proportional to the offset in frequency between the encoder 27 Mhz oscillator and decoder 27 MHz oscillator free-running frequency. &nbsp;This implies that the decoder should have a slightly larger buffer to absorb the offset timing. </span></font></p>
+<p>&nbsp;</p>
+<p><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;">Difference signal filtering is needed to reduce unnecessary response to PCR arrival time jitter. Jitter reduction must be traded for settling rate. &nbsp;MPEG sets a tolerance on input PCR jitter. &nbsp;The output jitter that is tolerable depends on the application, for example the use of the 27 MHz clock to generate display pixel, horizontal, and vertical clocks. If the recovered 27 MHz clock is used to generate NTSC color subcarrier, more stringent requirements with respect to both jitter and settling rate may need to be met.</span></font></p>
+<p>&nbsp;</p>
+<p><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;">The feedback loop in the receiver can be modeled as a sampled phase locked loop. &nbsp;The loop compares each value of a local STC counter sequence C'(n), driven by the receiver VCXO, to a sequence of received samples of the encoder's counter C(n), driven by the encoder STC, where for both counters we interpret</span></font></p>
+<p>&nbsp;</p>
+<p><img src="PLL2.gif" oursrc="PLL2.gif" width="577" height="57" align="left" border="0"></p>
+<p>&nbsp;</p>
+<p><img src="PLL15.gif" oursrc="PLL15.gif" width="541" height="326" align="baseline" alt="Sync loop block diagram" hspace="0" vspace="0" border="0"></p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p><font size="4" face="Times New Roman"><span class="DefaultParagraphFont" style="font-size: 11pt;">The * symbol in the e(n) calculation denotes convolution. </span></font><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;">C(n) represents PCR samples that are assumed to arrive at a 10 Hz rate. In this model the 27 MHz component of both the encoder and decoder clocks has been factored out of the sequences C(n) and C'(n). In other words C(n) and C'(n) are referenced to 27 MHz. Therefore the reception of an unjittered 27 MHz STC is represented by C(n) = 0,0,0,0......... If C'(n) is frequency locked to an unjittered C(n), then it will also be a sequence of a constant value. If C'(n) is locked to and in phase with C(n), then C'(n) = 0,0,0..... If C(n) = 0,0,0..... and C'(n) is not locked to it then C'(n) can be modeled as a ramp sequence increasing (or decreasing) at a rate corresponding to the difference in frequency between the oscillators represented by C(n) and C'(n).</span></font></p>
+<p>&nbsp;</p>
+<p><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;">Typically the operations of C(n) - C'(n), loop filter, and multiply by K operations are performed in a microcontroller (10 times per second) which provides the scaled filtered output to a pulse width modulator circuit PWM to drive an external VCXO which in turn drives a counter. The VCXO block above is understood to include the PWM, RC circuit, VCXO, and counter driven by the VCXO. &nbsp;The RC time constant can be ignored in this analysis if it is much less than the 100 ms spacing between C(n) samples.</span></font></p>
+<p>&nbsp;</p>
+<p><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;">If the z transform of the VCXO integrator block is modeled as 1/(z - 1), then the z transform of the closed loop transfer function for the above loop is given as</span></font></p>
+<p>&nbsp;</p>
+<p><img src="PLL3.gif" oursrc="PLL3.gif" width="218" height="41" align="left" border="0"></p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;">This model in the z domain is</span></font></p>
+<p>&nbsp;</p>
+<p><img src="PLL4.gif" oursrc="PLL4.gif" width="541" height="211" align="left" border="0"></p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;">Note that the 10 Hz PCR arrival rate sets an upper bound on loop bandwidth. Useful loop bandwidths for this application are typically much lower than 10 Hz.</span></font></p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p><font size="4" face="Times New Roman"><span class="DefaultParagraphFont" style="font-size: 11pt;"> </span></font></p>
+<p><font size="4" face="Times New Roman"><span class="DefaultParagraphFont" style="font-size: 11pt;"> </span></font></p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p></body>
+</html>

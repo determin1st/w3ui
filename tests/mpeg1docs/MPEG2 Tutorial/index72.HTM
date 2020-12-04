@@ -1,0 +1,29 @@
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN">
+<html>
+<head>
+
+	<META NAME="VPSiteProject" CONTENT="file:///C|/Bretl%20Site%20copy/BretlSite.vpp"><meta name="generator" content = "HyperText Studio from Olson Software (http://www.olsonsoft.com)">
+<meta name="formatter" content = "HyperText Studio from Olson Software (http://www.olsonsoft.com)">
+<title>Low Delay Mode</title>
+<style><!-- body { }
+H5{}
+H2{}
+H3{}
+H6{}
+H4{}
+H1{}
+P{}
+.DefaultParagraphFont{}
+ --></style>
+</head>
+<body>
+<BANNER>
+
+<p><font size="5" face="Arial"><span class="DefaultParagraphFont" style="font-size: 16pt;"><b>Low Delay Mode</b></span></font><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;"></span></font></p></BANNER>
+
+<p><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;">MPEG provides for a low delay mode by setting certain parameters.  For low delay, the total buffer delay must be minimized.  The low delay mode is signalled with a flag, low_delay, in the sequence header.  </span></font></p>
+<p>&nbsp;</p>
+<p><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;">B pictures are not used in this mode.  In addition, </span></font><a href="index103.HTM" target="popup"><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;">dual-prime prediction</span></font></a><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;"> may be used in P pictures to improve their quality for the available bit rate. Use of intra coded slices instead of complete intra coded pictures also reduces the required buffer occupancy and delay.  </span></font></p>
+<p>&nbsp;</p>
+<p><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;">Low delay mode also explicitly allows the encoder to use occasionally a larger access unit for a picture, and skip some succeeding pictures. The picture using the large number of bits is called a large picture, and is repeated at the receiver display to replace the skipped pictures. For use by the VBV model, this is indicated by a discontinuity in the value of temporal_reference for the next picture.  This value need not be noted by a decoder whose buffer management is based on time stamps, which can infer the required repetitions and/or explicitly read the required information from the values of repeat_first_field and top_field_first.</span></font></p></body>
+</html>

@@ -1,0 +1,32 @@
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN">
+<html>
+<head>
+
+	<META NAME="VPSiteProject" CONTENT="file:///C|/Bretl%20Site%20copy/BretlSite.vpp"><meta name="generator" content = "HyperText Studio from Olson Software (http://www.olsonsoft.com)">
+<meta name="formatter" content = "HyperText Studio from Olson Software (http://www.olsonsoft.com)">
+<title>Unpredictable Information</title>
+<style><!-- body { }
+H5{}
+H2{}
+H3{}
+H6{}
+H4{}
+H1{}
+P{}
+.DefaultParagraphFont{}
+ --></style>
+</head>
+<body>
+<BANNER>
+
+<p><font size="5" face="Arial"><span class="DefaultParagraphFont" style="font-size: 16pt;"><b>Unpredictable Information</b></span></font><font size="3" face="Times New Roman"><span class="DefaultParagraphFont" style="font-size: 10pt;"></span></font></p></BANNER>
+
+<p><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;">There is some information that is unpredictable from the previous frame:</span></font></p>
+<p>&nbsp;<ul type="disc"><li>
+<p style="text-indent:0px;margin-left:0px;"><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;">Scene change</span></font></li><li>
+<p style="text-indent:0px;margin-left:0px;"><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;">Newly uncovered information due to object motion across a background, or at the edges of a panned scene.</span></font></li></ul>
+<p>&nbsp;</p>
+<p><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;">To handle the scene change case (or startup conditions) a non-differential frame must be coded.  In MPEG, this is referred to as an </span></font><a href="index111.HTM" target="popup"><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;">I picture</span></font></a><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;"> or Intra-coded picture.  In a typical application, I pictures may be sent about twice per second, but their time and frequency of occurrence may be adjusted to accommodate scene changes.  I pictures require considerably more data to transmit than do predicted frames.</span></font></p>
+<p>&nbsp;</p>
+<p><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;">To reduce the data required to send uncovered information, MPEG includes a Bi-directionally coded type of picture, or </span></font><a href="index98.HTM" target="popup"><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;">B picture</span></font></a><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;">.  In this case, there must be enough frame storage in the system to wait for the later picture that has the desired information.  In order to limit the amount of memory in the decoder, the encoder stores pictures and sends the required </span></font><a href="index122.HTM" target="popup"><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;">reference pictures</span></font></a><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;"> </span></font><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;"><i>before </i></span></font><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;">sending the B picture. (See </span></font><a href="index34.HTM"><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;">I P B</span></font></a><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;"> Picture Reordering )</span></font></p></body>
+</html>

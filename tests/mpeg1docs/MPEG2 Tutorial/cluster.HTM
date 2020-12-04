@@ -1,0 +1,38 @@
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN">
+<html>
+<head>
+
+	<META NAME="VPSiteProject" CONTENT="file:///C|/Bretl%20Site%20copy/BretlSite.vpp"><meta name="generator" content = "HyperText Studio from Olson Software (http://www.olsonsoft.com)">
+<meta name="formatter" content = "HyperText Studio from Olson Software (http://www.olsonsoft.com)">
+<title>Example: Coding based on clustering of pixel values</title>
+<style><!-- body { }
+H1{}
+H6{}
+H5{}
+H3{}
+H2{}
+P{}
+H4{}
+.DefaultParagraphFont{}
+ --></style>
+</head>
+<body>
+<BANNER>
+
+<p><font size="5" face="Arial"><span class="DefaultParagraphFont" style="font-size: 16pt;"><b>Example: Coding based on clustering of pixel values</b></span></font><font size="3" face="Times New Roman"><span class="DefaultParagraphFont" style="font-size: 10pt;"></span></font></p></BANNER>
+
+<p><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;">This topic takes us off the direct path to MPEG, but it illustrates some of the principles of video compression. &nbsp;</span></font></p>
+<p><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;">If we transmit the pixels of a color picture directly, we may allow (for example) 8 bits per primary color per pixel to do so. &nbsp;A system with this capacity of 24 bits per pixel can transmit any possible sequence of pictures including pictures of completely random noise. &nbsp;However, we usually have no need to transmit frames of random noise, and are instead interested in pictures that have many types of internal correlations. &nbsp;</span></font></p>
+<p><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;">For this example, if we look at the distribution of pixel values in an image, we often find that the pixel values are clustered in several peaks, each cluster representing the color range of one object in the image. (This is especially true for cartoons, where large flat areas are painted with a single color.) &nbsp;These statistics are not often used for general compression systems for transmission, because they vary greatly from picture to picture, but they do have utility in techniques for reducing the number of bits per primary color used to represent the image. &nbsp;For example, some sort of statistical clustering algorithm typically is used to translate 24-bit-per-pixel &nbsp;(16 Million colors) to 8 bit per pixel (256 color) displays for computers. &nbsp;In this case, the original pixel colors are replaced with approximations based on the 256 most commonly occurring colors, obviously a </span></font><a href="index113.HTM" target="popup"><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;">lossy</span></font></a><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;"> procedure.</span></font></p>
+<p><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;">For general compression, where we want to maintain the general capability of &nbsp;16M colors, we could modify the procedure. &nbsp;Still looking at the clustering of the pixel values, we might do the following:</span></font></p>
+<p style="text-indent:-48px;margin-left:48px;"><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;">1) <tab>Separate the pixel values into a limited number of data clusters (e.g., pixels whose color is clustered near sky blue or grass green or flesh tone or the color of clothing in the image, etc.).</span></font></p>
+<p style="text-indent:-48px;margin-left:48px;"><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;">2) <tab>Send the average color of each cluster and an identifying number for each cluster as </span></font><a href="index123.HTM" target="popup"><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;">side information</span></font></a><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;">.</span></font></p>
+<p style="text-indent:-48px;margin-left:48px;"><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;">3) <tab>Transmit, for each pixel:</span></font></p>
+<p style="text-indent:0px;margin-left:48px;"><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;">a) The number of the average cluster color that it is close to, </span></font></p>
+<p style="text-indent:0px;margin-left:48px;"><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;"><i>and </i></span></font></p>
+<p style="text-indent:0px;margin-left:48px;"><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;">b) Its difference from that average cluster color.</span></font></p>
+<p>&nbsp;</p>
+<p><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;">Step 3 is an instance of </span></font><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;"><i>prediction</i></span></font><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;"></span></font><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;">, in which we predict the pixel to be the same color as one of the average cluster colors, and then transmit the </span></font><a href="index106.HTM" target="popup"><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;">error prediction signal</span></font></a><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;">, that is, the difference of the actual value from the predicted value.</span></font></p>
+<p><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;">So far, we have not reduced the data, and have in fact increased it by the use of side data. </span></font><a href="index112.HTM" target="popup"><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;">Lossless</span></font></a><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;"> data reduction can be achieved in this case, however, with the use of </span></font><a href="index105.HTM" target="popup"><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;">entropy coding</span></font></a><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;"> for the difference values generated in step 3 above. &nbsp;The basic idea is to use short data words to represent common difference values, and longer words for less common values. &nbsp;Depending on the distribution of difference values, statistical coding may give about a 2:1 gain over uncoded transmission. &nbsp;Note that this technique is lossless - the exact original pixels can be recovered.</span></font></p>
+<p><a href="simpdiff.HTM"><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;">NEXT - Simple Differential Predictive Coding </span></font></a></p></body>
+</html>

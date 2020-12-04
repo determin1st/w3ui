@@ -1,0 +1,44 @@
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN">
+<html>
+<head>
+
+	<META NAME="VPSiteProject" CONTENT="file:///C|/Bretl%20Site%20copy/BretlSite.vpp"><meta name="generator" content = "HyperText Studio from Olson Software (http://www.olsonsoft.com)">
+<meta name="formatter" content = "HyperText Studio from Olson Software (http://www.olsonsoft.com)">
+<title>Transport Adaptation Field</title>
+<style><!-- body { }
+H1{}
+H6{}
+H5{}
+H3{}
+H2{}
+P{}
+H4{}
+.DefaultParagraphFont{}
+ --></style>
+</head>
+<body>
+<BANNER>
+
+<p><font size="5" face="Arial"><span class="DefaultParagraphFont" style="font-size: 16pt;"><b>Transport Adaptation Field</b></span></font><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;"></span></font></p></BANNER>
+
+<p>&nbsp;</p>
+<p><img src="TRANSP2.gif" oursrc="TRANSP2.gif" width="291" height="150" align="bottom" border="0"></p>
+<p>&nbsp;</p>
+<p><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;">The first part of the adaptation field is 8 bits specifying the length of the adaptation field.</span></font></p>
+<p><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;">The first group of flags consists of (8) 1-bit flags:</span></font></p>
+<p><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;">discontinuity_indicator</span></font></p>
+<p><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;">random_access_indicator</span></font></p>
+<p><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;">elementary_stream_priority_indicator</span></font></p>
+<p><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;">PCR_flag</span></font></p>
+<p><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;">OPCR_flag</span></font></p>
+<p><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;">splicing_point_flag</span></font></p>
+<p><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;">transport_private_data_flag</span></font></p>
+<p><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;">adaptation_field_extension_flag</span></font></p>
+<p><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;">The optional fields are present if indicated by one of the preceding flags.</span></font></p>
+<p><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;">The remainder of the adaptation field is filled with stuffing bytes (0xFF, that is, &nbsp;all ones).</span></font></p>
+<p><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;">Refer to the MPEG Standards for more detail.</span></font></p>
+<p><a href="xprthdr.HTM">Previous: Transport Header</a></p>
+<p><a href="payload.HTM">Next: Transport Payload</a></p>
+<p><a href="pktdiag.HTM">Up to Transport Packet Diagram</a></p>
+<p>&nbsp;</p></body>
+</html>

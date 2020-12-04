@@ -1,0 +1,42 @@
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN">
+<html>
+<head>
+
+	<META NAME="VPSiteProject" CONTENT="file:///C|/Bretl%20Site%20copy/BretlSite.vpp"><meta name="generator" content = "HyperText Studio from Olson Software (http://www.olsonsoft.com)">
+<meta name="formatter" content = "HyperText Studio from Olson Software (http://www.olsonsoft.com)">
+<title>Annex A - Video Constraints</title>
+<style><!-- body { }
+H1{}
+H6{}
+H5{}
+H3{}
+H2{}
+P{}
+H4{}
+.DefaultParagraphFont{}
+ --></style>
+</head>
+<body>
+<BANNER>
+
+<p><font size="5" face="Arial"><span class="DefaultParagraphFont" style="font-size: 16pt;"><b>Annex A - Video Constraints</b></span></font><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;"></span></font></p></BANNER>
+
+<p><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;">This is a partial list of constraints of interest</span></font></p>
+<p><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;">The ATSC &nbsp;constraint on video buffer size is: </span></font></p>
+<p><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;">maximum video buffer = B = 7995392 bits, which is specified by transmitting:</span></font></p>
+<p><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;">vbv_buffer_size_value &lt;= 488 (lower 10 bits of vbv_buffer_size)</span></font></p>
+<p><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;">vbv_buffer_size_extension = 0 (upper 8 bits of vbv_buffer_size)</span></font></p>
+<p><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;">where B = 16*1024*vbv_buffer_size.</span></font></p>
+<p>&nbsp;</p>
+<p><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;">The ATSC constraint on vbv_delay is</span></font></p>
+<p><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;">vbv_delay &lt;= 45000</span></font></p>
+<p>&nbsp;</p>
+<p><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;">ATSC constrains PES packets for video:</span></font><ul type="disc"><li>
+<p style="text-indent:0px;margin-left:0px;"><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;">Every video PES packet begins with the beginning of a video </span></font><a href="index94.HTM" target="popup"><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;">access unit</span></font></a><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;">. </span></font></li><li>
+<p style="text-indent:0px;margin-left:0px;"><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;">For terrestrial broadcast, each PES packet contains no more than one coded video frame (may contain one or two coded fields or one frame). &nbsp;</span></font></li><li>
+<p style="text-indent:0px;margin-left:0px;"><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;">Every PES header contains a PTS.</span></font></li><li>
+<p style="text-indent:0px;margin-left:0px;"><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;">A PES packet devoid of video information must include the discontinuity_indicator to signal that the continuity_counter may be discontinuous.</span></font></li></ul>
+<p>&nbsp;</p>
+<p><a href="A53B.HTM">Next: Annex B - Audio System</a></p>
+<p style="text-indent:0px;margin-left:0px;"><a href="A53spec.HTM">Up to ATSC Doc A/53 Constraints on MPEG</a></p></body>
+</html>

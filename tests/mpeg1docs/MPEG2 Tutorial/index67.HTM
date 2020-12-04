@@ -1,0 +1,39 @@
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN">
+<html>
+<head>
+
+	<META NAME="VPSiteProject" CONTENT="file:///C|/Bretl%20Site%20copy/BretlSite.vpp"><meta name="generator" content = "HyperText Studio from Olson Software (http://www.olsonsoft.com)">
+<meta name="formatter" content = "HyperText Studio from Olson Software (http://www.olsonsoft.com)">
+<title>VBV - Video Buffering Verifier</title>
+<style><!-- body { }
+H5{}
+H2{}
+H3{}
+H6{}
+H4{}
+H1{}
+P{}
+.DefaultParagraphFont{}
+ --></style>
+</head>
+<body>
+<BANNER>
+
+<p><font size="5" face="Arial"><span class="DefaultParagraphFont" style="font-size: 16pt;"><b>VBV - Video Buffering Verifier</b></span></font><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;"></span></font></p></BANNER>
+
+<p><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;">The Video Buffer Verifier (VBV) is a model hypothetical decoder buffer that will not overflow or underflow when fed a conforming MPEG bit stream.  Thus, part of the </span></font><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;"><i>definition </i></span></font><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;">of a compliant stream is that it does not cause underflow or overflow of this model buffer.  The quantities that MPEG transmits to specify decoder buffer action according to this model are explained fully below. However, decoders do not have to use these quantities, but instead can rely on redundant information provided by </span></font><a href="index128.HTM" target="popup"><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;">time stamps</span></font></a><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;">. A thorough explanation is in the section on </span></font><a href="index68.HTM"><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;">Buffer Synchronization and Startup</span></font></a><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;"> .</span></font></p>
+<p>&nbsp;</p>
+<p><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;">Operation of the VBV is tied to two transmitted values,  vbv_buffer_size_value, the maximum buffer fullness, and vbv_delay, the delay between storing a picture start code in the buffer and starting the decoding of that picture.  vbv_buffer_size is transmitted in every sequence header. vbv_delay is transmitted in every picture header.   Note that the sequence header and vbv_buffer_size may not be available when tuning to a program in progress.  However, proper operation of the decoder buffer can be obtained by use of the System Time Clock and various time stamps and an a priori knowledge of the maximum buffer size that may be required, so that vbv_delay and vbv_buffer size are redundant. </span></font></p>
+<p>&nbsp;</p>
+<p><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;">In the ATSC standard A/53 Annex A, the constraint on buffer size is: </span></font></p>
+<p><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;">maximum video buffer = B = 7995392 bits, which is specified by</span></font></p>
+<p><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;">transmitting:</span></font></p>
+<p><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;">vbv_buffer_size_value &lt;= 488 (lower 10 bits of vbv_buffer_size)</span></font></p>
+<p><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;">vbv_buffer_size_extension = 0 (upper 8 bits of vbv_buffer_size)</span></font></p>
+<p><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;">where B = 16*1024*vbv_buffer_size.</span></font></p>
+<p>&nbsp;</p>
+<p><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;">The ATSC constraint on vbv_delay is</span></font></p>
+<p><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;">vbv_delay &lt;= 45000</span></font></p>
+<p>&nbsp;</p>
+<p><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;">vbv_delay is a 16 bit unsigned integer representing  the number of 90kHz clock periods between entering a picture's start code into the buffer and removing and decoding the entire picture.</span></font></p></body>
+</html>

@@ -1,0 +1,35 @@
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN">
+<html>
+<head>
+
+	<META NAME="VPSiteProject" CONTENT="file:///C|/Bretl%20Site%20copy/BretlSite.vpp"><meta name="generator" content = "HyperText Studio from Olson Software (http://www.olsonsoft.com)">
+<meta name="formatter" content = "HyperText Studio from Olson Software (http://www.olsonsoft.com)">
+<title>Constant Bit Rate Operation</title>
+<style><!-- body { }
+H1{}
+H6{}
+H5{}
+H3{}
+H2{}
+P{}
+H4{}
+.DefaultParagraphFont{}
+ --></style>
+</head>
+<body>
+<BANNER>
+
+<p><font size="5" face="Arial"><span class="DefaultParagraphFont" style="font-size: 16pt;"><b>Constant Bit Rate Operation</b></span></font><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;"></span></font></p></BANNER>
+
+<p><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;">Because the total buffer delay is known, the time at which a particular access unit should be decoded can be easily calculated by the encoder and transmitted as the </span></font><a href="PTS.HTM"><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;">presentation time stamp</span></font></a><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;"> (PTS) (or </span></font><a href="DTS.HTM"><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;">decoder time stamp</span></font></a><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;"> ,DTS if present). &nbsp;</span></font></p>
+<p><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;">The decoder synchronizes the decoder buffer as follows: </span></font></p>
+<p><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;">Assume that the decoder </span></font><a href="index127.HTM" target="popup"><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;">system time clock</span></font></a><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;"> is synchronized. &nbsp;When a PTS or DTS is received, it is inserted into a PTS/DTS list with a pointer to the buffer location of the corresponding access unit. &nbsp;At the instant of reception and decoder buffer loading, the decoder system time clock (STC) will have a value equal to the (instantaneous) coding time plus the encoder buffer delay. The STC will be less than the PTS, because the PTS equals the coding instant plus the </span></font><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;"><i>total </i></span></font><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;"></span></font><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;">buffer delay (encoder + decoder). Later, when the STC equals the PTS, the whole access unit is extracted, decoded, and displayed. (In case of reordering, the access unit is decoded when the STC equals the DTS, &nbsp;but it is not displayed until the STC equals the PTS).</span></font></p>
+<p><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;">It is required not to overflow or underflow the buffers. &nbsp;This means also that an entire access unit must be present in the decoder buffer before it is instantaneously read and decoded. &nbsp;To accomplish this, the encoder buffer must </span></font></p>
+<p><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;">a) never overflow (the requirement if decoding were bit-by-bit)</span></font></p>
+<p><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;">b) must be emptied of each complete access unit at its DTS time.</span></font></p>
+<p><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;">The buffer fill rate is controlled by changing the variable quantization (see </span></font><a href="quantiz.HTM"><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;">MPEG 2 Quantization</span></font></a><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;"> ). &nbsp;The control feedback always works on buffer fullness and may also have feed forward features to estimate ahead of time the bit rate needed for each picture. &nbsp;In addition, it must constrain the number of bits in each access unit so that when it is inserted into the encoder buffer, there is enough time for it to be transmitted before its DTS/PTS time. &nbsp;An practical encoder that looks at least one frame ahead will be capable of this. Each access unit is reduced if necessary to a size that fits between the end of the previous access unit and the data position in the buffer that will be transmitted before the next DTS/PTS time. </span></font></p>
+<p><font size="3" face="Arial"><span class="DefaultParagraphFont" style="font-size: 10pt;">In the case of a practical non-instantaneous encoder (or decoder), additional buffer space equal to one picture period times the constant bit rate may be required.</span></font></p>
+<p><a href="VarBRr.HTM">Next: Variable Bit Rate Operation</a></p>
+<p><a href="bufsync.HTM">Up to Buffer Synchronization and Startup</a></p>
+<p>&nbsp;</p></body>
+</html>
