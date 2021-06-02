@@ -17,10 +17,10 @@ w3ui = do ->
 	blocks  = (Object.create null)
 	Console = (BRAND, DEBUG) !->
 		@brand      = BRAND
+		@isDebug    = DEBUG
 		@brandStyle = 'font-weight:bold;color:skyblue'
 		@logStyle   = 'color:aquamarine'
 		@errorStyle = 'color:hotpink'
-		@isDebug    = DEBUG
 	Console.prototype =
 		new: (brand, debug) ->
 			retrun new Console brand, debug
@@ -31,7 +31,8 @@ w3ui = do ->
 			msg = '%c'+@brand+': %c'+msg
 			console.log msg, @brandStyle, @errorStyle
 		debug: (e) !->
-			console.log e if @isDebug
+			if @isDebug
+				console.log '%c'+@brand+':', @brandStyle, e
 	# }}}
 	Object.assign w3ui, { # {{{
 		console: new Console 'w3ui', true
@@ -562,50 +563,83 @@ w3ui = do ->
 		}
 	# }}}
 	Object.assign blocks, { # {{{
-		### PRIMITIVES (CSR constructors)
+		### PRIMITIVE (base constructors)
 		group: do -> # {{{
-			Block = (name, sup) !->
+			Block = (root, group, o) !-> # {{{
+				###
+				@root    = root
+				@rootBox = root.firstChild
+				@level   = if o.hasOwnPropery 'level'
+					then o.level
+					else group.level
+				@config  = group.super.config
+				@state   = group.super.state
+				@locked  = 1
+				@init    = o.init
+				@sync    = o.sync
+				@check   = o.check or null
+				@charge  = !~>
+					group.sync @
+					group.super.charge @ if @level
+				###
+				o.construct.call @ if o.construct
+				###
+			# }}}
+			Group = (name, level, sup) !->
 				# {{{
 				@name   = name
+				@level  = level
 				@super  = sup
 				@blocks = []
-				@config = sup.config
-				@data   = null # sup.state[name]
-				@level  = 0
 				# }}}
-			Block.prototype =
+			Group.prototype =
 				init: !-> # {{{
-					# order blocks by thier priority level (ascending)
-					@blocks.sort (a, b) ->
-						return if a.level < b.level
-							then -1
-							else if a.level == b.level
-								then 0
-								else 1
-					# iterate
-					for block in @blocks
-						# each master block has a group property,
-						# which must be set with the group object
-						block.group  = @
-						block.charge = @charge block
-						# initialization of the group is all or nothing,
-						# synchroneous operation, where each master obtains
-						# access to the supervisor instance
-						block.init @super
-					# set data shortcut
-					@data = @super.state[@name]
+					# initialize all blocks in the group
+					# blocks set shared state and config at this stage
+					for a in @blocks
+						a.init!
 				# }}}
 				sync: (block) !-> # {{{
-					# synchronize all blocks in this group,
-					# excluding specified block (initiator)
+					# synchronize all blocks in the group
+					# specified block (initiator) excluded
 					for a in @blocks when a != block
 						a.sync!
 				# }}}
-				charge: (block) -> !~> # {{{
-					@sync block
-					@super.charge block.level
-				# }}}
-			return Block
+			return (name, level, sup, o) ->
+				# create a group
+				debugger
+				console = sup.console
+				group   = new Group name, level, sup
+				blocks  = group.blocks
+				console.debug 'group "'+name+'"..'
+				# iterate options and
+				# create blocks
+				for a of o
+					# find all DOM nodes of this block,
+					# down to the supervisor's root
+					b = sup.root.querySelectorAll '.'+sup.brand+'.'+a
+					if not (c = b.length)
+						console.debug 'block "'+a+'".. skip'
+						continue
+					# iterate found nodes and
+					# construct master block
+					b = Array.from b
+					d = -1
+					while ++d < c
+						blocks[*] = new Block b[d], group, o[a]
+					console.debug 'block "'+a+'".. ok'
+				# check empty
+				if not blocks.length
+					return null
+				# sort blocks by priority level (ascending)
+				blocks.sort (a, b) ->
+					return if a.level < b.level
+						then -1
+						else if a.level == b.level
+							then 0
+							else 1
+				# complete
+				return group
 		# }}}
 		resizer: do -> # TODO {{{
 			Slave = (master, node) !->
@@ -663,33 +697,276 @@ w3ui = do ->
 				# }}}
 			return Master
 		# }}}
-		grid: do -> # {{{
-			Block = (o) !->
+		buffer: do -> # {{{
+			Block = (size) !->
 				# {{{
-				# base
-				@root    = o.root
-				@rootBox = o.root.firstChild
-				@cfg     = o.cfg or null
-				# controls
-				# ...
-				# state
-				@hovered = 0
-				@focused = 0
-				@locked  = 1
-				# traps
-				# ...
-				# handlers
-				#e = {hover:0}
-				#e = Object.assign e, o.event if o.event
-				#events.attach @, e
+				@total  = -1  # total items available -1=undetermined
+				@bufA   = []  # forward buffer
+				@bufB   = []  # backward buffer
+				@range  = [   # shared with loader
+					0,    # primary offset (first record)
+					0,0,  # forward range: offset,count
+					0,0   # backward range
+				]
+				@offset = [  # buffer offsets
+					0, # primary range offset (for update check)
+					0, # current buffer offset (center point)
+					0  # buffer is valid
+				]
 				# }}}
 			Block.prototype =
-				init: !-> # {{{
+				init: (total) !-> # {{{
 				# }}}
-			return w3ui.factory 'grid', Block
+				/***
+				load: (i, record) -> # {{{
+					# check range and buffer are valid
+					if not (o = @offset).2
+						return false
+					# determine where to store this record
+					if i < @range.2
+						# store forward
+						i = @bufA.length
+						@bufA[i] = record
+						# determine display offset
+						i = if (o = o.0 - o.1) >= 0
+							then i - o
+							else i - @group.config.total - o
+						# update item if it's displayed
+						if i >= 0 and i < @count
+							@items[i].set record
+					else
+						# store backward
+						i = @bufB.length
+						@bufB[i] = record
+						# determine display offset
+						i = if (o = o.1 - o.0) > 0
+							then i - o
+							else i - @group.config.total - o
+						# update item if it's displayed
+						if i < 0 and i + @count >= 0
+							@items[-i - 1].set record
+					# done
+					return true
+				# }}}
+				/***/
+				load: (record) -> # {{{
+					# prepare
+					if not (o = @offset).2
+						return false
+					o = @offset
+					A = @bufA
+					B = @bufB
+					# determine where to store this record
+					if i < @range.2
+						# store forward
+						i = A.length
+						A[i] = record
+						# determine display offset
+						i = if (o = o.0 - o.1) >= 0
+							then i - o
+							else i - @group.config.total - o
+						# update item if it's displayed
+						if i >= 0 and i < @count
+							@items[i].set record
+					else
+						# store backward
+						i = @bufB.length
+						@bufB[i] = record
+						# determine display offset
+						i = if (o = o.1 - o.0) > 0
+							then i - o
+							else i - @group.config.total - o
+						# update item if it's displayed
+						if i < 0 and i + @count >= 0
+							@items[-i - 1].set record
+					# done
+					return true
+				# }}}
+				setBuffer: -> # {{{
+					# prepare
+					A = @bufA
+					B = @bufB
+					R = @range
+					a = A.length
+					b = B.length
+					c = @group.config.total
+					d = @page
+					o = @offset.0
+					O = @offset.1
+					# determine offset deviation
+					if (i = o - O) > 0 and c - i < i
+						i = i - c # swap to backward
+					else if i < 0 and c + i < -i
+						i = c + i # swap to forward
+					# check out of range
+					if (Math.abs i) > d + d - 1
+						@clearBuffer!
+						return 2
+					# determine steady limit
+					d = d .>>>. 1
+					# check steady
+					if i == 0 or (i > 0 and d - i > 0)
+						# forward {{{
+						# update items
+						j = -1
+						while ++j < @count
+							if i < a
+								@items[j].set A[i++]
+							else
+								@items[j].set!
+						# }}}
+						return 0
+					if i < 0 and d + i >= 0
+						# backward {{{
+						# update items
+						j = -1
+						k = -i - 1
+						while ++j < @count
+							if k >= 0 and b - k > 0
+								@items[j].set B[k]
+							else if k < 0 and a + k > 0
+								# option: the count of displayed items may not align
+								# with the total count, so, the last page may show
+								# records from forward buffer
+								if @config.wrapAround
+									@items[j].set A[-k - 1]
+								else
+									@items[j].set!
+							else
+								@items[j].set!
+							--k
+						# }}}
+						return 0
+					# check partial penetration
+					if i > 0 and a - i > 0
+						# forward {{{
+						# [v|v|v|v]
+						#   [v|v|v|x]
+						# avoid creation of sparse array
+						j = b
+						while j < i
+							B[j++] = null
+						# rotate buffer forward
+						j = i
+						k = 0
+						while k < b and j < @page
+							B[j++] = B[k++]
+						B.length = j
+						j = i - 1
+						k = 0
+						while ~j
+							B[j--] = A[k++]
+						#j = -1
+						#k = i
+						while k < a
+							A[++j] = A[k++]
+						A.length = k = j + 1
+						# update items (last to first)
+						j = @count
+						while j
+							if --j < k
+								@items[j].set A[j]
+							else
+								@items[j].set!
+						# update range
+						@setRange o, true
+						# }}}
+						return 1
+					if i < 0 and b + i > 0
+						# backward {{{
+						#   [v|v|v|v]
+						# [x|v|v|v]
+						# avoid creation of sparse array
+						i = -i
+						j = a
+						while j < i
+							A[j++] = null
+						# rotate buffer backward
+						j = i
+						k = 0
+						while k < a and j < @page
+							A[j++] = A[k++]
+						A.length = j
+						j = i - 1
+						k = 0
+						while ~j
+							A[j--] = B[k++]
+						#j = -1
+						#k = i
+						while k < b
+							B[++j] = B[k++]
+						B.length = j + 1
+						# update items display (first to last)
+						j = -1
+						k = A.length
+						while ++j < @count
+							if j < k
+								@items[j].set A[j]
+							else
+								@items[j].set!
+						# update range
+						@setRange o, true
+						# }}}
+						return -1
+					# buffer penetrated (wasn't filled enough)
+					@clearBuffer!
+					return -2
+				# }}}
+				setRange: (o, gaps) -> # {{{
+					# prepare
+					a = @range
+					c = @cfg.limit
+					# operate
+					if not ~@total
+						# the total is not determined yet,
+						# external loader will determine proper range,
+						# set desired offset, limits and special size value
+						a.0 = o
+						a.2 = a.4 = c
+						a.1 = a.3 = -1 # request total
+						###
+					else if gaps
+						# buffer replenishment required,
+						# shift offsets to fill the gaps
+						a.0 = o
+						if (b = @bufA.length) < c
+							if (a.1 = o + b) >= @total
+								a.1 = a.1 - @total
+							a.2 = c - b
+						else
+							a.1 = a.2 = 0
+						if (b = @bufB.length) < c
+							if (a.3 = o - 1 - b) < 0
+								a.3 = a.3 + @total
+							a.4 = c - b
+						else
+							a.3 = a.4 = 0
+						###
+					else
+						# default range (@total > c + c)
+						a.0 = a.1 = o
+						a.2 = a.4 = c
+						a.3 = if o
+							then o - 1
+							else @total - 1
+						###
+					# done
+					return true
+				# }}}
+				clearBuffer: !-> # {{{
+					# set new range
+					@setRange @offset.0
+					# clear records
+					@bufA.length = @bufB.length = 0
+					# clear items
+					i = @count
+					while i
+						@items[--i].set!
+					# done
+				# }}}
+			return Block
 		# }}}
-		# TODO: refactor
-		# TODO: scroller
+		###
 		button: do -> # {{{
 			Block = (root, o) !->
 				# {{{
@@ -1040,238 +1317,236 @@ w3ui = do ->
 				return new Block a, o
 			# }}}
 		# }}}
+		# TODO: scroller
 	}
 	# }}}
 	Object.assign w3ui, {
 		blocks: Object.freeze blocks
 		events: Object.freeze events
 		### COMPOUND VIEWS (CSR/SSR factories)
+		grid: do -> # {{{
+			Block = (o) !->
+				# {{{
+				# base
+				@root    = o.root
+				@rootBox = o.root.firstChild
+				@cfg     = o.cfg or null
+				# controls
+				# ...
+				# state
+				@hovered = 0
+				@focused = 0
+				@locked  = 1
+				# traps
+				# ...
+				# handlers
+				#e = {hover:0}
+				#e = Object.assign e, o.event if o.event
+				#events.attach @, e
+				# }}}
+			Block.prototype =
+				init: !-> # {{{
+				# }}}
+			return w3ui.factory 'grid', Block
+		# }}}
 		gridlist: do -> # {{{
 			# HELPERS {{{
-			t1 = w3ui.template !-> # {{{
-				/*
-				*/
-			# }}}
-			t2 = w3ui.template !-> # {{{
-				/*
-				*/
-			# }}}
 			/***
-			refresher = (block) !-> # {{{
-				e = jQuery document.body
-				e.on 'removed_from_cart', (e, frags) !->
-					# prepare
-					frags = frags['div.widget_shopping_cart_content']
-					cart  = block.group.config.cart
-					items = block.items
-					# iterate
-					for a,b of cart when b.count
-						# search item in the fragments
-						if (frags.indexOf 'data-product_id="'+a+'"') == -1
-							# zap
-							b.count = 0
-							# search product in view
-							e = -1
-							while ++e < block.count
-								if items[e].data.id == a
-									items[e].refresh!
-				###
-			# }}}
-				@intersect = (e) ~>> # {{{
-					# fixed rows
-					# {{{
-					a = @block.config.layout
-					if (c = @block.rows) or (c = a.1) == a.3
-						# update
-						if (a = @layout).1 != c
-							@block.root.style.setProperty '--rows', (a.1 = c)
-							a.0 and @block.setCount (a.0 * c)
-						# done
-						return true
-					# }}}
-					# dynamic rows
-					# check locked
-					if @dot.pending or not e
-						console.log 'intersect skip'
-						return true
-					# prepare
-					e = e.0.intersectionRatio
-					o = @layout
-					c = o.1
-					b = a.3
-					a = a.1
-					# get scrollable container (aka viewport)
-					if not (w = v = @i_opt.root)
-						w = window
-						v = document.documentElement
-					# get viewport, row and dot heights
-					h = v.clientHeight
-					y = (@gaps.1 + @sizes.1) * @factor
-					z = (@sizes.2 * @factor)
-					# determine scroll parking point (dot offset),
-					# which must be smaller than threshold trigger
-					x = z * (1 - @i_opt.threshold.1 - 0.01) .|. 0
-					# handle finite scroll
-					# {{{
-					if b
-						# ...
-						return true
-					# }}}
-					# handle infinite scroll
-					# {{{
-					# fill the viewport (extend scroll height)
-					b = v.scrollHeight
-					if e and b < h + z
-						# determine exact minimum
-						e  = Math.ceil ((b - c*y - z) / y)
+			@intersect = (e) ~>> # {{{
+				# fixed rows
+				# {{{
+				a = @block.config.layout
+				if (c = @block.rows) or (c = a.1) == a.3
+					# update
+					if (a = @layout).1 != c
+						@block.root.style.setProperty '--rows', (a.1 = c)
+						a.0 and @block.setCount (a.0 * c)
+					# done
+					return true
+				# }}}
+				# dynamic rows
+				# check locked
+				if @dot.pending or not e
+					console.log 'intersect skip'
+					return true
+				# prepare
+				e = e.0.intersectionRatio
+				o = @layout
+				c = o.1
+				b = a.3
+				a = a.1
+				# get scrollable container (aka viewport)
+				if not (w = v = @i_opt.root)
+					w = window
+					v = document.documentElement
+				# get viewport, row and dot heights
+				h = v.clientHeight
+				y = (@gaps.1 + @sizes.1) * @factor
+				z = (@sizes.2 * @factor)
+				# determine scroll parking point (dot offset),
+				# which must be smaller than threshold trigger
+				x = z * (1 - @i_opt.threshold.1 - 0.01) .|. 0
+				# handle finite scroll
+				# {{{
+				if b
+					# ...
+					return true
+				# }}}
+				# handle infinite scroll
+				# {{{
+				# fill the viewport (extend scroll height)
+				b = v.scrollHeight
+				if e and b < h + z
+					# determine exact minimum
+					e  = Math.ceil ((b - c*y - z) / y)
+					c += e
+					b += y*e
+					# update
+					@block.root.style.setProperty '--rows', (o.1 = c)
+					if o.0 and @block.setCount (o.0 * c) and @ready.pending
+						@ready.resolve!
+					# adjust scroll position
+					@s_opt.0 = v.scrollTop
+					@s_opt.1.top = b - h - x
+					@s_opt.2.top = b - h - z
+					# wait repositions (should be cancelled)
+					await (@dot = w3ui.promise -1)
+					@observer.1.disconnect!
+					@observer.1.observe @block.dot
+					# done
+					return true
+				# adjust the viewport
+				while e
+					# determine scroll options and
+					# set scroll (after increment)
+					@s_opt.1.top = b - h - x
+					@s_opt.2.top = b - h - z
+					if e > 0
+						w.scrollTo @s_opt.1
+					else if @s_opt.0 == -2
+						w.scrollTo @s_opt.2
+					# determine decrement's trigger point
+					i = @s_opt.1.top - y - @pads.2
+					# wait triggered
+					if not (e = await (@dot = w3ui.promise i))
+						break
+					# check
+					if e == 1
+						# increment,
+						# TODO: uncontrolled?
+						c += 1
+						b += y
+					else
+						# decrement,
+						# determine intensity value
+						i = 1 + (i - v.scrollTop) / y
+						e = -(i .|. 0)
+						console.log 'decrement', e
+						# apply intensity
 						c += e
 						b += y*e
-						# update
-						@block.root.style.setProperty '--rows', (o.1 = c)
-						if o.0 and @block.setCount (o.0 * c) and @ready.pending
-							@ready.resolve!
-						# adjust scroll position
-						@s_opt.0 = v.scrollTop
-						@s_opt.1.top = b - h - x
-						@s_opt.2.top = b - h - z
-						# wait repositions (should be cancelled)
-						await (@dot = w3ui.promise -1)
-						@observer.1.disconnect!
-						@observer.1.observe @block.dot
-						# done
-						return true
-					# adjust the viewport
-					while e
-						# determine scroll options and
-						# set scroll (after increment)
-						@s_opt.1.top = b - h - x
-						@s_opt.2.top = b - h - z
-						if e > 0
-							w.scrollTo @s_opt.1
-						else if @s_opt.0 == -2
-							w.scrollTo @s_opt.2
-						# determine decrement's trigger point
-						i = @s_opt.1.top - y - @pads.2
-						# wait triggered
-						if not (e = await (@dot = w3ui.promise i))
-							break
-						# check
-						if e == 1
-							# increment,
-							# TODO: uncontrolled?
+						# apply limits
+						while c < a or b < h + z
 							c += 1
 							b += y
-						else
-							# decrement,
-							# determine intensity value
-							i = 1 + (i - v.scrollTop) / y
-							e = -(i .|. 0)
-							console.log 'decrement', e
-							# apply intensity
-							c += e
-							b += y*e
-							# apply limits
-							while c < a or b < h + z
-								c += 1
-								b += y
-								i -= 1
-								e  = 0 # sneaky escape (after update)
-							# check exhausted
-							if c == o.1
-								console.log 'decrement exhausted'
-								break
-							# check last decrement
-							if e and b - y < h + z and b - z > h + v.scrollTop
-								e = 0
-							# apply scroll adjustment (dot start)
-							if (i - (i .|. 0))*y < (z - x + 1)
-								if e
-									console.log 'scroll alignment'
-									@s_opt.0 = -2
-								else
-									console.log 'scroll alignment last'
-									w.scrollTo @s_opt.2
-						# update
-						@block.root.style.setProperty '--rows', (o.1 = c)
-						if o.0 and @block.setCount (o.0 * c) and @ready.pending
-							@ready.resolve!
-						# continue..
-					# }}}
-					# done
-					return true
+							i -= 1
+							e  = 0 # sneaky escape (after update)
+						# check exhausted
+						if c == o.1
+							console.log 'decrement exhausted'
+							break
+						# check last decrement
+						if e and b - y < h + z and b - z > h + v.scrollTop
+							e = 0
+						# apply scroll adjustment (dot start)
+						if (i - (i .|. 0))*y < (z - x + 1)
+							if e
+								console.log 'scroll alignment'
+								@s_opt.0 = -2
+							else
+								console.log 'scroll alignment last'
+								w.scrollTo @s_opt.2
+					# update
+					@block.root.style.setProperty '--rows', (o.1 = c)
+					if o.0 and @block.setCount (o.0 * c) and @ready.pending
+						@ready.resolve!
+					# continue..
 				# }}}
-				@scroll = (e) ~>> # {{{
-					# check intersection locked (upper limit determined)
-					if not (a = @dot.pending)
-						console.log 'scroll skip'
-						return true
-					# increase intensity
-					if @intense.pending
-						@intense.pending += 1
-						return false
-					# skip first scroll (programmatic)
-					c = @s_opt.2.top
-					d = @s_opt.1.top
-					if (b = @s_opt.0) < 0
-						console.log 'first scroll skip'
-						@s_opt.0 = if ~b
-							then c
-							else d
-						return false
-					# get scrollable container (aka viewport)
-					e = @i_opt.root or document.documentElement
-					i = if e.scrollTop > b
-						then 60  # increase
-						else 100 # decrease
-					# throttle (lock and accumulate)
-					while (await (@intense = w3ui.delay i, 1)) > 1
-						true
-					# get current position
-					e = e.scrollTop
-					# check changed
-					if (Math.abs (e - b)) < 0.2
-						console.log 'small scroll skip'
-						return true
-					# save position
-					@s_opt.0 = e
-					# reposition?
-					console.log 'reposition?', e, b, c, d
-					if b > c + 1 and e < b and e > c - 1
-						# exit (dot start)
-						@s_opt.0 = -2
-						a = window if not (a = @i_opt.root)
-						a.scrollTo @s_opt.2
-						console.log 'exit', @s_opt.2.top
-						return true
-					if b < d - 1 and e > b and e > c
-						# enter (dot trigger)
-						@s_opt.0 = -1
-						a = window if not (a = @i_opt.root)
-						a.scrollTo @s_opt.1
-						console.log 'enter', @s_opt.1.top
-						return true
-					# increment?
-					if e > d
-						# reset and resolve positive
-						console.log 'increment'
-						@s_opt.0 = -1
-						@dot.resolve 1
-						return true
-					# cancellation?
-					if a < 0
-						# negative upper limit means decrement is not possible
-						# reset and cancel scroll observations
-						console.log 'cancelled'
-						@s_opt.0 = -1
-						@dot.resolve 0
-						return true
-					# decrement?
-					if e < a
-						# resolve negative
-						@dot.resolve -1
-					# done
+				# done
+				return true
+			# }}}
+			@scroll = (e) ~>> # {{{
+				# check intersection locked (upper limit determined)
+				if not (a = @dot.pending)
+					console.log 'scroll skip'
 					return true
-				# }}}
+				# increase intensity
+				if @intense.pending
+					@intense.pending += 1
+					return false
+				# skip first scroll (programmatic)
+				c = @s_opt.2.top
+				d = @s_opt.1.top
+				if (b = @s_opt.0) < 0
+					console.log 'first scroll skip'
+					@s_opt.0 = if ~b
+						then c
+						else d
+					return false
+				# get scrollable container (aka viewport)
+				e = @i_opt.root or document.documentElement
+				i = if e.scrollTop > b
+					then 60  # increase
+					else 100 # decrease
+				# throttle (lock and accumulate)
+				while (await (@intense = w3ui.delay i, 1)) > 1
+					true
+				# get current position
+				e = e.scrollTop
+				# check changed
+				if (Math.abs (e - b)) < 0.2
+					console.log 'small scroll skip'
+					return true
+				# save position
+				@s_opt.0 = e
+				# reposition?
+				console.log 'reposition?', e, b, c, d
+				if b > c + 1 and e < b and e > c - 1
+					# exit (dot start)
+					@s_opt.0 = -2
+					a = window if not (a = @i_opt.root)
+					a.scrollTo @s_opt.2
+					console.log 'exit', @s_opt.2.top
+					return true
+				if b < d - 1 and e > b and e > c
+					# enter (dot trigger)
+					@s_opt.0 = -1
+					a = window if not (a = @i_opt.root)
+					a.scrollTo @s_opt.1
+					console.log 'enter', @s_opt.1.top
+					return true
+				# increment?
+				if e > d
+					# reset and resolve positive
+					console.log 'increment'
+					@s_opt.0 = -1
+					@dot.resolve 1
+					return true
+				# cancellation?
+				if a < 0
+					# negative upper limit means decrement is not possible
+					# reset and cancel scroll observations
+					console.log 'cancelled'
+					@s_opt.0 = -1
+					@dot.resolve 0
+					return true
+				# decrement?
+				if e < a
+					# resolve negative
+					@dot.resolve -1
+				# done
+				return true
+			# }}}
 			/***/
 			# }}}
 			Resizer = (block) !->
@@ -1394,6 +1669,8 @@ w3ui = do ->
 					b = @block.cfg
 					a.0 = b.cols.0
 					a.1 = b.rows.0
+					a.2 = a.0 * a.1
+					a.3 = b.mode
 					# create observer and feed it with root node,
 					# this makes first resize inevitable but not forced
 					@obs = new ResizeObserver @resize
@@ -1434,18 +1711,11 @@ w3ui = do ->
 					# done
 					return [a,b]
 				# }}}
-				refresh: ->> # {{{
-					# update layout
-					await @resize! # columns
-					await @intersect! # rows
-					# done
-					return true
-				# }}}
 			Block = (o) !->
 				# {{{
 				@root    = o.root
 				@rootBox = o.root.firstChild
-				@item    = o.item or blocks.grid
+				@item    = o.item or w3ui.grid
 				@cfg     = w3ui.assign o.cfg, {
 					# grid container
 					# display mode: 0=cards (vertical), 1=lines (horizontal)
@@ -1468,26 +1738,13 @@ w3ui = do ->
 					wraparound: 1
 				}
 				# controls
-				@items    = null
-				@resizer  = null
-				@scroller = null
+				@buffer  = new blocks.buffer 100
+				@resizer = new Resizer @
+				@items   = null
 				# state
-				@layout = [     # grid container
-					0,0,          # columns,rows
-					0             # items displayed columns*rows
-				]
-				@total  = -1    # total items available -1=undetermined
-				@range  = [     # shared with loader
-					0,   # primary offset (first record index)
-					0,0, # forward range: offset,count
-					0,0  # backward range
-				]
-				@bufA   = [] # forward buffer
-				@bufB   = [] # backward buffer
-				@offset = [  # buffer offsets
-					0, # primary range offset (for update check)
-					0, # current buffer offset (center point)
-					0  # buffer is valid
+				@layout  = [# initialized by resizer
+					0,0, # columns,rows
+					0,0  # columns*rows,mode
 				]
 				@charged = 0
 				@hovered = 0
@@ -1505,7 +1762,7 @@ w3ui = do ->
 			Block.prototype =
 				init: !-> # {{{
 					# initialize
-					# check and set display mode class
+					# set display mode class
 					a = 'cards'
 					b = 'lines'
 					c = a
@@ -1513,69 +1770,23 @@ w3ui = do ->
 						a = b
 						b = c
 					c = @root.classList
-					if not c.contains a
-						c.add a
-					if c.contains b
-						c.remove b
+					c.add a if not c.contains a
+					c.remove b if c.contains b
 					# zap previous contents
 					a = @rootBox
 					while a.firstChild
 						a.removeChild a.lastChild
 					# initialize resizer
-					if @resizer
-						@resizer.finit!
-					else
-						@resizer = new Resizer @
 					@resizer.init!
-					# initialize range
-					@total = -1
-					@setRange 0
+					@buffer.init!
+					#@total = -1
+					#@setRange 0
 				# }}}
-				setRange: (o, gaps) -> # {{{
-					# prepare
-					a = @range
-					c = @cfg.limit
-					# operate
-					if not ~@total
-						# the total is not determined yet,
-						# external loader will determine proper range,
-						# set desired offset, limits and special size value
-						a.0 = o
-						a.2 = a.4 = c
-						a.1 = a.3 = -1 # request total
-						###
-					else if gaps
-						# buffer replenishment required,
-						# shift offsets to fill the gaps
-						a.0 = o
-						if (b = @bufA.length) < c
-							if (a.1 = o + b) >= @total
-								a.1 = a.1 - @total
-							a.2 = c - b
-						else
-							a.1 = a.2 = 0
-						if (b = @bufB.length) < c
-							if (a.3 = o - 1 - b) < 0
-								a.3 = a.3 + @total
-							a.4 = c - b
-						else
-							a.3 = a.4 = 0
-						###
-					else
-						# default range (@total > c + c)
-						a.0 = a.1 = o
-						a.2 = a.4 = c
-						a.3 = if o
-							then o - 1
-							else @total - 1
-						###
-					# done
-					return true
-				# }}}
-				setLayout: (cols, rows = 0) -> # {{{
+				setLayout: (cols, rows) -> # {{{
 					# prepare
 					layout = @layout
 					items  = @items
+					cols   = layout.0 if not cols
 					rows   = layout.1 if not rows
 					count  = cols * rows
 					# check changed
@@ -1650,179 +1861,30 @@ w3ui = do ->
 					# done
 					return true
 				# }}}
+				setOffset: (i) -> # {{{
+					###
+					###
+					###
+					# update primary value
+					@offset.0 = a
+					# update buffer
+					if @setBuffer!
+						@offset.1 = a # update buffer offset
+						@offset.2 = 0 # invalidate buffer
+						@charged++
+						@group.charge @
+					###
+					true
+				# }}}
+				setTotal: (i) -> # {{{
+					###
+					@buffer.init i
+					###
+				# }}}
 				setItem: (record) -> # {{{
-					# prepare
-					if not (o = @offset).2
-						return false
-					o = @offset
-					A = @bufA
-					B = @bufB
-					# determine where to store this record
-					if i < @range.2
-						# store forward
-						i = A.length
-						A[i] = record
-						# determine display offset
-						i = if (o = o.0 - o.1) >= 0
-							then i - o
-							else i - @group.config.total - o
-						# update item if it's displayed
-						if i >= 0 and i < @count
-							@items[i].set record
-					else
-						# store backward
-						i = @bufB.length
-						@bufB[i] = record
-						# determine display offset
-						i = if (o = o.1 - o.0) > 0
-							then i - o
-							else i - @group.config.total - o
-						# update item if it's displayed
-						if i < 0 and i + @count >= 0
-							@items[-i - 1].set record
-					# done
-					return true
-				# }}}
-				setBuffer: -> # {{{
-					# prepare
-					A = @bufA
-					B = @bufB
-					R = @range
-					a = A.length
-					b = B.length
-					c = @group.config.total
-					d = @page
-					o = @offset.0
-					O = @offset.1
-					# determine offset deviation
-					if (i = o - O) > 0 and c - i < i
-						i = i - c # swap to backward
-					else if i < 0 and c + i < -i
-						i = c + i # swap to forward
-					# check out of range
-					if (Math.abs i) > d + d - 1
-						@clearBuffer!
-						return 2
-					# determine steady limit
-					d = d .>>>. 1
-					# check steady
-					if i == 0 or (i > 0 and d - i > 0)
-						# forward {{{
-						# update items
-						j = -1
-						while ++j < @count
-							if i < a
-								@items[j].set A[i++]
-							else
-								@items[j].set!
-						# }}}
-						return 0
-					if i < 0 and d + i >= 0
-						# backward {{{
-						# update items
-						j = -1
-						k = -i - 1
-						while ++j < @count
-							if k >= 0 and b - k > 0
-								@items[j].set B[k]
-							else if k < 0 and a + k > 0
-								# option: the count of displayed items may not align
-								# with the total count, so, the last page may show
-								# records from forward buffer
-								if @config.wrapAround
-									@items[j].set A[-k - 1]
-								else
-									@items[j].set!
-							else
-								@items[j].set!
-							--k
-						# }}}
-						return 0
-					# check partial penetration
-					if i > 0 and a - i > 0
-						# forward {{{
-						# [v|v|v|v]
-						#   [v|v|v|x]
-						# avoid creation of sparse array
-						j = b
-						while j < i
-							B[j++] = null
-						# rotate buffer forward
-						j = i
-						k = 0
-						while k < b and j < @page
-							B[j++] = B[k++]
-						B.length = j
-						j = i - 1
-						k = 0
-						while ~j
-							B[j--] = A[k++]
-						#j = -1
-						#k = i
-						while k < a
-							A[++j] = A[k++]
-						A.length = k = j + 1
-						# update items (last to first)
-						j = @count
-						while j
-							if --j < k
-								@items[j].set A[j]
-							else
-								@items[j].set!
-						# update range
-						@setRange o, true
-						# }}}
-						return 1
-					if i < 0 and b + i > 0
-						# backward {{{
-						#   [v|v|v|v]
-						# [x|v|v|v]
-						# avoid creation of sparse array
-						i = -i
-						j = a
-						while j < i
-							A[j++] = null
-						# rotate buffer backward
-						j = i
-						k = 0
-						while k < a and j < @page
-							A[j++] = A[k++]
-						A.length = j
-						j = i - 1
-						k = 0
-						while ~j
-							A[j--] = B[k++]
-						#j = -1
-						#k = i
-						while k < b
-							B[++j] = B[k++]
-						B.length = j + 1
-						# update items display (first to last)
-						j = -1
-						k = A.length
-						while ++j < @count
-							if j < k
-								@items[j].set A[j]
-							else
-								@items[j].set!
-						# update range
-						@setRange o, true
-						# }}}
-						return -1
-					# buffer penetrated (wasn't filled enough)
-					@clearBuffer!
-					return -2
-				# }}}
-				clearBuffer: !-> # {{{
-					# set new range
-					@setRange @offset.0
-					# clear records
-					@bufA.length = @bufB.length = 0
-					# clear items
-					i = @count
-					while i
-						@items[--i].set!
-					# done
+					###
+					i = @buffer.set record
+					###
 				# }}}
 			return w3ui.factory 'gridlist', Block
 		# }}}
@@ -2250,17 +2312,28 @@ w3ui = do ->
 				'currency'# [symbol,decimal_sep,thousand_sep,decimal_cnt]
 				'cart'    # shopping cart
 				'price'   # price range [min,max]
+				'layout'  # view layout
 				'total'   # total records count
 			]
 			# }}}
 			stateGroups = [ # {{{
 				'lang'    # [primary,lang2,..]
 				'route'   # [menu-id,navigation-id]
-				'range'   # [offset,limit,o1,o2,o3,o4]
+				'range'   # [offset,o1,o2,o3,o4]
 				'order'   # [tag,variant]
 				'category'# [id-1..N],[..],..
 				'price'   # [min,max]
 			]
+			# }}}
+			groupLevel = { # {{{
+				lang:     4
+				route:    3
+				range:    1
+				order:    1
+				category: 2
+				price:    2
+			}
+			groupLevel = w3ui.assign groupLevel, stateGroups
 			# }}}
 			Visor = (o) !->
 				# {{{
@@ -2442,7 +2515,6 @@ w3ui = do ->
 				sup     = new Visor o
 				root    = sup.root
 				brand   = sup.brand
-				master  = sup.master
 				console = sup.console
 				blocks  = sup.blocks
 				groups  = sup.groups
@@ -2450,6 +2522,9 @@ w3ui = do ->
 				await w3ui.delay 0
 				console.log 'new supervisor'
 				# INITIALIZE
+				for a,b of sup.master
+					w3ui.blocks.group a, b, sup
+				/***
 				# create master blocks {{{
 				for a of master
 					# search DOM nodes
@@ -2485,6 +2560,7 @@ w3ui = do ->
 					# add block
 					c.blocks.push b
 				# }}}
+				/***/
 				await w3ui.delay 0
 				console.log 'initializing..'
 				# set configuration {{{
@@ -2515,8 +2591,6 @@ w3ui = do ->
 				for a in blocks when a.root
 					a.root.classList.add 'v'
 				# }}}
-				#@onLoad @ if @onLoad
-				#@resizer = newResizer '.'+BRAND+'-resizer', blocks
 				# COMPLETE
 				await w3ui.delay 0
 				time = (window.performance.now! - time) .|. 0

@@ -8,10 +8,10 @@ w3ui = function(){
   blocks = Object.create(null);
   Console = function(BRAND, DEBUG){
     this.brand = BRAND;
+    this.isDebug = DEBUG;
     this.brandStyle = 'font-weight:bold;color:skyblue';
     this.logStyle = 'color:aquamarine';
     this.errorStyle = 'color:hotpink';
-    this.isDebug = DEBUG;
   };
   Console.prototype = {
     'new': function(brand, debug){
@@ -27,7 +27,7 @@ w3ui = function(){
     },
     debug: function(e){
       if (this.isDebug) {
-        console.log(e);
+        console.log('%c' + this.brand + ':', this.brandStyle, e);
       }
     }
   };
@@ -541,30 +541,43 @@ w3ui = function(){
   }());
   Object.assign(blocks, {
     group: function(){
-      var Block;
-      Block = function(name, sup){
+      var Block, Group;
+      Block = function(root, group, o){
+        var this$ = this;
+        this.root = root;
+        this.rootBox = root.firstChild;
+        this.level = o.hasOwnPropery('level')
+          ? o.level
+          : group.level;
+        this.config = group['super'].config;
+        this.state = group['super'].state;
+        this.locked = 1;
+        this.init = o.init;
+        this.sync = o.sync;
+        this.check = o.check || null;
+        this.charge = function(){
+          group.sync(this$);
+          if (this$.level) {
+            group['super'].charge(this$);
+          }
+        };
+        if (o.construct) {
+          o.construct.call(this);
+        }
+      };
+      Group = function(name, level, sup){
         this.name = name;
+        this.level = level;
         this['super'] = sup;
         this.blocks = [];
-        this.config = sup.config;
-        this.data = null;
-        this.level = 0;
       };
-      Block.prototype = {
+      Group.prototype = {
         init: function(){
-          var i$, ref$, len$, block;
-          this.blocks.sort(function(a, b){
-            return a.level < b.level
-              ? -1
-              : a.level === b.level ? 0 : 1;
-          });
+          var i$, ref$, len$, a;
           for (i$ = 0, len$ = (ref$ = this.blocks).length; i$ < len$; ++i$) {
-            block = ref$[i$];
-            block.group = this;
-            block.charge = this.charge(block);
-            block.init(this['super']);
+            a = ref$[i$];
+            a.init();
           }
-          this.data = this['super'].state[this.name];
         },
         sync: function(block){
           var i$, ref$, len$, a;
@@ -574,16 +587,38 @@ w3ui = function(){
               a.sync();
             }
           }
-        },
-        charge: function(block){
-          var this$ = this;
-          return function(){
-            this$.sync(block);
-            this$['super'].charge(block.level);
-          };
         }
       };
-      return Block;
+      return function(name, level, sup, o){
+        debugger;
+        var console, group, blocks, a, b, c, d;
+        console = sup.console;
+        group = new Group(name, level, sup);
+        blocks = group.blocks;
+        console.debug('group "' + name + '"..');
+        for (a in o) {
+          b = sup.root.querySelectorAll('.' + sup.brand + '.' + a);
+          if (!(c = b.length)) {
+            console.debug('block "' + a + '".. skip');
+            continue;
+          }
+          b = Array.from(b);
+          d = -1;
+          while (++d < c) {
+            blocks[blocks.length] = new Block(b[d], group, o[a]);
+          }
+          console.debug('block "' + a + '".. ok');
+        }
+        if (!blocks.length) {
+          return null;
+        }
+        blocks.sort(function(a, b){
+          return a.level < b.level
+            ? -1
+            : a.level === b.level ? 0 : 1;
+        });
+        return group;
+      };
     }(),
     resizer: function(){
       var Slave, Master;
@@ -645,20 +680,242 @@ w3ui = function(){
       };
       return Master;
     }(),
-    grid: function(){
+    buffer: function(){
       var Block;
-      Block = function(o){
-        this.root = o.root;
-        this.rootBox = o.root.firstChild;
-        this.cfg = o.cfg || null;
-        this.hovered = 0;
-        this.focused = 0;
-        this.locked = 1;
+      Block = function(size){
+        this.total = -1;
+        this.bufA = [];
+        this.bufB = [];
+        this.range = [0, 0, 0, 0, 0];
+        this.offset = [0, 0, 0];
       };
       Block.prototype = {
-        init: function(){}
+        init: function(total){}
+        /***
+        load: (i, record) -> # {{{
+        	# check range and buffer are valid
+        	if not (o = @offset).2
+        		return false
+        	# determine where to store this record
+        	if i < @range.2
+        		# store forward
+        		i = @bufA.length
+        		@bufA[i] = record
+        		# determine display offset
+        		i = if (o = o.0 - o.1) >= 0
+        			then i - o
+        			else i - @group.config.total - o
+        		# update item if it's displayed
+        		if i >= 0 and i < @count
+        			@items[i].set record
+        	else
+        		# store backward
+        		i = @bufB.length
+        		@bufB[i] = record
+        		# determine display offset
+        		i = if (o = o.1 - o.0) > 0
+        			then i - o
+        			else i - @group.config.total - o
+        		# update item if it's displayed
+        		if i < 0 and i + @count >= 0
+        			@items[-i - 1].set record
+        	# done
+        	return true
+        # }}}
+        /***/,
+        load: function(record){
+          var o, A, B, i;
+          if (!(o = this.offset)[2]) {
+            return false;
+          }
+          o = this.offset;
+          A = this.bufA;
+          B = this.bufB;
+          if (i < this.range[2]) {
+            i = A.length;
+            A[i] = record;
+            i = (o = o[0] - o[1]) >= 0
+              ? i - o
+              : i - this.group.config.total - o;
+            if (i >= 0 && i < this.count) {
+              this.items[i].set(record);
+            }
+          } else {
+            i = this.bufB.length;
+            this.bufB[i] = record;
+            i = (o = o[1] - o[0]) > 0
+              ? i - o
+              : i - this.group.config.total - o;
+            if (i < 0 && i + this.count >= 0) {
+              this.items[-i - 1].set(record);
+            }
+          }
+          return true;
+        },
+        setBuffer: function(){
+          var A, B, R, a, b, c, d, o, O, i, j, k;
+          A = this.bufA;
+          B = this.bufB;
+          R = this.range;
+          a = A.length;
+          b = B.length;
+          c = this.group.config.total;
+          d = this.page;
+          o = this.offset[0];
+          O = this.offset[1];
+          if ((i = o - O) > 0 && c - i < i) {
+            i = i - c;
+          } else if (i < 0 && c + i < -i) {
+            i = c + i;
+          }
+          if (Math.abs(i) > d + d - 1) {
+            this.clearBuffer();
+            return 2;
+          }
+          d = d >>> 1;
+          if (i === 0 || (i > 0 && d - i > 0)) {
+            j = -1;
+            while (++j < this.count) {
+              if (i < a) {
+                this.items[j].set(A[i++]);
+              } else {
+                this.items[j].set();
+              }
+            }
+            return 0;
+          }
+          if (i < 0 && d + i >= 0) {
+            j = -1;
+            k = -i - 1;
+            while (++j < this.count) {
+              if (k >= 0 && b - k > 0) {
+                this.items[j].set(B[k]);
+              } else if (k < 0 && a + k > 0) {
+                if (this.config.wrapAround) {
+                  this.items[j].set(A[-k - 1]);
+                } else {
+                  this.items[j].set();
+                }
+              } else {
+                this.items[j].set();
+              }
+              --k;
+            }
+            return 0;
+          }
+          if (i > 0 && a - i > 0) {
+            j = b;
+            while (j < i) {
+              B[j++] = null;
+            }
+            j = i;
+            k = 0;
+            while (k < b && j < this.page) {
+              B[j++] = B[k++];
+            }
+            B.length = j;
+            j = i - 1;
+            k = 0;
+            while (~j) {
+              B[j--] = A[k++];
+            }
+            while (k < a) {
+              A[++j] = A[k++];
+            }
+            A.length = k = j + 1;
+            j = this.count;
+            while (j) {
+              if (--j < k) {
+                this.items[j].set(A[j]);
+              } else {
+                this.items[j].set();
+              }
+            }
+            this.setRange(o, true);
+            return 1;
+          }
+          if (i < 0 && b + i > 0) {
+            i = -i;
+            j = a;
+            while (j < i) {
+              A[j++] = null;
+            }
+            j = i;
+            k = 0;
+            while (k < a && j < this.page) {
+              A[j++] = A[k++];
+            }
+            A.length = j;
+            j = i - 1;
+            k = 0;
+            while (~j) {
+              A[j--] = B[k++];
+            }
+            while (k < b) {
+              B[++j] = B[k++];
+            }
+            B.length = j + 1;
+            j = -1;
+            k = A.length;
+            while (++j < this.count) {
+              if (j < k) {
+                this.items[j].set(A[j]);
+              } else {
+                this.items[j].set();
+              }
+            }
+            this.setRange(o, true);
+            return -1;
+          }
+          this.clearBuffer();
+          return -2;
+        },
+        setRange: function(o, gaps){
+          var a, c, b;
+          a = this.range;
+          c = this.cfg.limit;
+          if (!~this.total) {
+            a[0] = o;
+            a[2] = a[4] = c;
+            a[1] = a[3] = -1;
+          } else if (gaps) {
+            a[0] = o;
+            if ((b = this.bufA.length) < c) {
+              if ((a[1] = o + b) >= this.total) {
+                a[1] = a[1] - this.total;
+              }
+              a[2] = c - b;
+            } else {
+              a[1] = a[2] = 0;
+            }
+            if ((b = this.bufB.length) < c) {
+              if ((a[3] = o - 1 - b) < 0) {
+                a[3] = a[3] + this.total;
+              }
+              a[4] = c - b;
+            } else {
+              a[3] = a[4] = 0;
+            }
+          } else {
+            a[0] = a[1] = o;
+            a[2] = a[4] = c;
+            a[3] = o
+              ? o - 1
+              : this.total - 1;
+          }
+          return true;
+        },
+        clearBuffer: function(){
+          var i;
+          this.setRange(this.offset[0]);
+          this.bufA.length = this.bufB.length = 0;
+          i = this.count;
+          while (i) {
+            this.items[--i].set();
+          }
+        }
       };
-      return w3ui.factory('grid', Block);
+      return Block;
     }(),
     button: function(){
       var Block;
@@ -1012,233 +1269,220 @@ w3ui = function(){
   Object.assign(w3ui, {
     blocks: Object.freeze(blocks),
     events: Object.freeze(events),
+    grid: function(){
+      var Block;
+      Block = function(o){
+        this.root = o.root;
+        this.rootBox = o.root.firstChild;
+        this.cfg = o.cfg || null;
+        this.hovered = 0;
+        this.focused = 0;
+        this.locked = 1;
+      };
+      Block.prototype = {
+        init: function(){}
+      };
+      return w3ui.factory('grid', Block);
+    }(),
     gridlist: function(){
-      var t1, t2, Resizer, Block;
-      t1 = w3ui.template(function(){
-        /*
-        */
-      });
-      t2 = w3ui.template(function(){
-        /*
-        */
-      });
       /***
-      refresher = (block) !-> # {{{
-      	e = jQuery document.body
-      	e.on 'removed_from_cart', (e, frags) !->
-      		# prepare
-      		frags = frags['div.widget_shopping_cart_content']
-      		cart  = block.group.config.cart
-      		items = block.items
-      		# iterate
-      		for a,b of cart when b.count
-      			# search item in the fragments
-      			if (frags.indexOf 'data-product_id="'+a+'"') == -1
-      				# zap
-      				b.count = 0
-      				# search product in view
-      				e = -1
-      				while ++e < block.count
-      					if items[e].data.id == a
-      						items[e].refresh!
-      	###
-      # }}}
-      	@intersect = (e) ~>> # {{{
-      		# fixed rows
-      		# {{{
-      		a = @block.config.layout
-      		if (c = @block.rows) or (c = a.1) == a.3
-      			# update
-      			if (a = @layout).1 != c
-      				@block.root.style.setProperty '--rows', (a.1 = c)
-      				a.0 and @block.setCount (a.0 * c)
-      			# done
-      			return true
-      		# }}}
-      		# dynamic rows
-      		# check locked
-      		if @dot.pending or not e
-      			console.log 'intersect skip'
-      			return true
-      		# prepare
-      		e = e.0.intersectionRatio
-      		o = @layout
-      		c = o.1
-      		b = a.3
-      		a = a.1
-      		# get scrollable container (aka viewport)
-      		if not (w = v = @i_opt.root)
-      			w = window
-      			v = document.documentElement
-      		# get viewport, row and dot heights
-      		h = v.clientHeight
-      		y = (@gaps.1 + @sizes.1) * @factor
-      		z = (@sizes.2 * @factor)
-      		# determine scroll parking point (dot offset),
-      		# which must be smaller than threshold trigger
-      		x = z * (1 - @i_opt.threshold.1 - 0.01) .|. 0
-      		# handle finite scroll
-      		# {{{
-      		if b
-      			# ...
-      			return true
-      		# }}}
-      		# handle infinite scroll
-      		# {{{
-      		# fill the viewport (extend scroll height)
-      		b = v.scrollHeight
-      		if e and b < h + z
-      			# determine exact minimum
-      			e  = Math.ceil ((b - c*y - z) / y)
+      @intersect = (e) ~>> # {{{
+      	# fixed rows
+      	# {{{
+      	a = @block.config.layout
+      	if (c = @block.rows) or (c = a.1) == a.3
+      		# update
+      		if (a = @layout).1 != c
+      			@block.root.style.setProperty '--rows', (a.1 = c)
+      			a.0 and @block.setCount (a.0 * c)
+      		# done
+      		return true
+      	# }}}
+      	# dynamic rows
+      	# check locked
+      	if @dot.pending or not e
+      		console.log 'intersect skip'
+      		return true
+      	# prepare
+      	e = e.0.intersectionRatio
+      	o = @layout
+      	c = o.1
+      	b = a.3
+      	a = a.1
+      	# get scrollable container (aka viewport)
+      	if not (w = v = @i_opt.root)
+      		w = window
+      		v = document.documentElement
+      	# get viewport, row and dot heights
+      	h = v.clientHeight
+      	y = (@gaps.1 + @sizes.1) * @factor
+      	z = (@sizes.2 * @factor)
+      	# determine scroll parking point (dot offset),
+      	# which must be smaller than threshold trigger
+      	x = z * (1 - @i_opt.threshold.1 - 0.01) .|. 0
+      	# handle finite scroll
+      	# {{{
+      	if b
+      		# ...
+      		return true
+      	# }}}
+      	# handle infinite scroll
+      	# {{{
+      	# fill the viewport (extend scroll height)
+      	b = v.scrollHeight
+      	if e and b < h + z
+      		# determine exact minimum
+      		e  = Math.ceil ((b - c*y - z) / y)
+      		c += e
+      		b += y*e
+      		# update
+      		@block.root.style.setProperty '--rows', (o.1 = c)
+      		if o.0 and @block.setCount (o.0 * c) and @ready.pending
+      			@ready.resolve!
+      		# adjust scroll position
+      		@s_opt.0 = v.scrollTop
+      		@s_opt.1.top = b - h - x
+      		@s_opt.2.top = b - h - z
+      		# wait repositions (should be cancelled)
+      		await (@dot = w3ui.promise -1)
+      		@observer.1.disconnect!
+      		@observer.1.observe @block.dot
+      		# done
+      		return true
+      	# adjust the viewport
+      	while e
+      		# determine scroll options and
+      		# set scroll (after increment)
+      		@s_opt.1.top = b - h - x
+      		@s_opt.2.top = b - h - z
+      		if e > 0
+      			w.scrollTo @s_opt.1
+      		else if @s_opt.0 == -2
+      			w.scrollTo @s_opt.2
+      		# determine decrement's trigger point
+      		i = @s_opt.1.top - y - @pads.2
+      		# wait triggered
+      		if not (e = await (@dot = w3ui.promise i))
+      			break
+      		# check
+      		if e == 1
+      			# increment,
+      			# TODO: uncontrolled?
+      			c += 1
+      			b += y
+      		else
+      			# decrement,
+      			# determine intensity value
+      			i = 1 + (i - v.scrollTop) / y
+      			e = -(i .|. 0)
+      			console.log 'decrement', e
+      			# apply intensity
       			c += e
       			b += y*e
-      			# update
-      			@block.root.style.setProperty '--rows', (o.1 = c)
-      			if o.0 and @block.setCount (o.0 * c) and @ready.pending
-      				@ready.resolve!
-      			# adjust scroll position
-      			@s_opt.0 = v.scrollTop
-      			@s_opt.1.top = b - h - x
-      			@s_opt.2.top = b - h - z
-      			# wait repositions (should be cancelled)
-      			await (@dot = w3ui.promise -1)
-      			@observer.1.disconnect!
-      			@observer.1.observe @block.dot
-      			# done
-      			return true
-      		# adjust the viewport
-      		while e
-      			# determine scroll options and
-      			# set scroll (after increment)
-      			@s_opt.1.top = b - h - x
-      			@s_opt.2.top = b - h - z
-      			if e > 0
-      				w.scrollTo @s_opt.1
-      			else if @s_opt.0 == -2
-      				w.scrollTo @s_opt.2
-      			# determine decrement's trigger point
-      			i = @s_opt.1.top - y - @pads.2
-      			# wait triggered
-      			if not (e = await (@dot = w3ui.promise i))
-      				break
-      			# check
-      			if e == 1
-      				# increment,
-      				# TODO: uncontrolled?
+      			# apply limits
+      			while c < a or b < h + z
       				c += 1
       				b += y
-      			else
-      				# decrement,
-      				# determine intensity value
-      				i = 1 + (i - v.scrollTop) / y
-      				e = -(i .|. 0)
-      				console.log 'decrement', e
-      				# apply intensity
-      				c += e
-      				b += y*e
-      				# apply limits
-      				while c < a or b < h + z
-      					c += 1
-      					b += y
-      					i -= 1
-      					e  = 0 # sneaky escape (after update)
-      				# check exhausted
-      				if c == o.1
-      					console.log 'decrement exhausted'
-      					break
-      				# check last decrement
-      				if e and b - y < h + z and b - z > h + v.scrollTop
-      					e = 0
-      				# apply scroll adjustment (dot start)
-      				if (i - (i .|. 0))*y < (z - x + 1)
-      					if e
-      						console.log 'scroll alignment'
-      						@s_opt.0 = -2
-      					else
-      						console.log 'scroll alignment last'
-      						w.scrollTo @s_opt.2
-      			# update
-      			@block.root.style.setProperty '--rows', (o.1 = c)
-      			if o.0 and @block.setCount (o.0 * c) and @ready.pending
-      				@ready.resolve!
-      			# continue..
-      		# }}}
-      		# done
-      		return true
+      				i -= 1
+      				e  = 0 # sneaky escape (after update)
+      			# check exhausted
+      			if c == o.1
+      				console.log 'decrement exhausted'
+      				break
+      			# check last decrement
+      			if e and b - y < h + z and b - z > h + v.scrollTop
+      				e = 0
+      			# apply scroll adjustment (dot start)
+      			if (i - (i .|. 0))*y < (z - x + 1)
+      				if e
+      					console.log 'scroll alignment'
+      					@s_opt.0 = -2
+      				else
+      					console.log 'scroll alignment last'
+      					w.scrollTo @s_opt.2
+      		# update
+      		@block.root.style.setProperty '--rows', (o.1 = c)
+      		if o.0 and @block.setCount (o.0 * c) and @ready.pending
+      			@ready.resolve!
+      		# continue..
       	# }}}
-      	@scroll = (e) ~>> # {{{
-      		# check intersection locked (upper limit determined)
-      		if not (a = @dot.pending)
-      			console.log 'scroll skip'
-      			return true
-      		# increase intensity
-      		if @intense.pending
-      			@intense.pending += 1
-      			return false
-      		# skip first scroll (programmatic)
-      		c = @s_opt.2.top
-      		d = @s_opt.1.top
-      		if (b = @s_opt.0) < 0
-      			console.log 'first scroll skip'
-      			@s_opt.0 = if ~b
-      				then c
-      				else d
-      			return false
-      		# get scrollable container (aka viewport)
-      		e = @i_opt.root or document.documentElement
-      		i = if e.scrollTop > b
-      			then 60  # increase
-      			else 100 # decrease
-      		# throttle (lock and accumulate)
-      		while (await (@intense = w3ui.delay i, 1)) > 1
-      			true
-      		# get current position
-      		e = e.scrollTop
-      		# check changed
-      		if (Math.abs (e - b)) < 0.2
-      			console.log 'small scroll skip'
-      			return true
-      		# save position
-      		@s_opt.0 = e
-      		# reposition?
-      		console.log 'reposition?', e, b, c, d
-      		if b > c + 1 and e < b and e > c - 1
-      			# exit (dot start)
-      			@s_opt.0 = -2
-      			a = window if not (a = @i_opt.root)
-      			a.scrollTo @s_opt.2
-      			console.log 'exit', @s_opt.2.top
-      			return true
-      		if b < d - 1 and e > b and e > c
-      			# enter (dot trigger)
-      			@s_opt.0 = -1
-      			a = window if not (a = @i_opt.root)
-      			a.scrollTo @s_opt.1
-      			console.log 'enter', @s_opt.1.top
-      			return true
-      		# increment?
-      		if e > d
-      			# reset and resolve positive
-      			console.log 'increment'
-      			@s_opt.0 = -1
-      			@dot.resolve 1
-      			return true
-      		# cancellation?
-      		if a < 0
-      			# negative upper limit means decrement is not possible
-      			# reset and cancel scroll observations
-      			console.log 'cancelled'
-      			@s_opt.0 = -1
-      			@dot.resolve 0
-      			return true
-      		# decrement?
-      		if e < a
-      			# resolve negative
-      			@dot.resolve -1
-      		# done
+      	# done
+      	return true
+      # }}}
+      @scroll = (e) ~>> # {{{
+      	# check intersection locked (upper limit determined)
+      	if not (a = @dot.pending)
+      		console.log 'scroll skip'
       		return true
-      	# }}}
+      	# increase intensity
+      	if @intense.pending
+      		@intense.pending += 1
+      		return false
+      	# skip first scroll (programmatic)
+      	c = @s_opt.2.top
+      	d = @s_opt.1.top
+      	if (b = @s_opt.0) < 0
+      		console.log 'first scroll skip'
+      		@s_opt.0 = if ~b
+      			then c
+      			else d
+      		return false
+      	# get scrollable container (aka viewport)
+      	e = @i_opt.root or document.documentElement
+      	i = if e.scrollTop > b
+      		then 60  # increase
+      		else 100 # decrease
+      	# throttle (lock and accumulate)
+      	while (await (@intense = w3ui.delay i, 1)) > 1
+      		true
+      	# get current position
+      	e = e.scrollTop
+      	# check changed
+      	if (Math.abs (e - b)) < 0.2
+      		console.log 'small scroll skip'
+      		return true
+      	# save position
+      	@s_opt.0 = e
+      	# reposition?
+      	console.log 'reposition?', e, b, c, d
+      	if b > c + 1 and e < b and e > c - 1
+      		# exit (dot start)
+      		@s_opt.0 = -2
+      		a = window if not (a = @i_opt.root)
+      		a.scrollTo @s_opt.2
+      		console.log 'exit', @s_opt.2.top
+      		return true
+      	if b < d - 1 and e > b and e > c
+      		# enter (dot trigger)
+      		@s_opt.0 = -1
+      		a = window if not (a = @i_opt.root)
+      		a.scrollTo @s_opt.1
+      		console.log 'enter', @s_opt.1.top
+      		return true
+      	# increment?
+      	if e > d
+      		# reset and resolve positive
+      		console.log 'increment'
+      		@s_opt.0 = -1
+      		@dot.resolve 1
+      		return true
+      	# cancellation?
+      	if a < 0
+      		# negative upper limit means decrement is not possible
+      		# reset and cancel scroll observations
+      		console.log 'cancelled'
+      		@s_opt.0 = -1
+      		@dot.resolve 0
+      		return true
+      	# decrement?
+      	if e < a
+      		# resolve negative
+      		@dot.resolve -1
+      	# done
+      	return true
+      # }}}
       /***/
+      var Resizer, Block;
       Resizer = function(block){
         var this$ = this;
         this.block = block;
@@ -1315,6 +1559,8 @@ w3ui = function(){
           b = this.block.cfg;
           a[0] = b.cols[0];
           a[1] = b.rows[0];
+          a[2] = a[0] * a[1];
+          a[3] = b.mode;
           this.obs = new ResizeObserver(this.resize);
           this.obs.observe(this.block.root);
         },
@@ -1343,18 +1589,13 @@ w3ui = function(){
             }
           }
           return [a, b];
-        },
-        refresh: async function(){
-          (await this.resize());
-          (await this.intersect());
-          return true;
         }
       };
       Block = function(o){
         var e;
         this.root = o.root;
         this.rootBox = o.root.firstChild;
-        this.item = o.item || blocks.grid;
+        this.item = o.item || w3ui.grid;
         this.cfg = w3ui.assign(o.cfg, {
           mode: 0,
           cols: [1, 4],
@@ -1364,15 +1605,10 @@ w3ui = function(){
           order: ['default', -1],
           wraparound: 1
         });
+        this.buffer = new blocks.buffer(100);
+        this.resizer = new Resizer(this);
         this.items = null;
-        this.resizer = null;
-        this.scroller = null;
-        this.layout = [0, 0, 0];
-        this.total = -1;
-        this.range = [0, 0, 0, 0, 0];
-        this.bufA = [];
-        this.bufB = [];
-        this.offset = [0, 0, 0];
+        this.layout = [0, 0, 0, 0];
         this.charged = 0;
         this.hovered = 0;
         this.focused = 0;
@@ -1409,55 +1645,16 @@ w3ui = function(){
           while (a.firstChild) {
             a.removeChild(a.lastChild);
           }
-          if (this.resizer) {
-            this.resizer.finit();
-          } else {
-            this.resizer = new Resizer(this);
-          }
           this.resizer.init();
-          this.total = -1;
-          this.setRange(0);
-        },
-        setRange: function(o, gaps){
-          var a, c, b;
-          a = this.range;
-          c = this.cfg.limit;
-          if (!~this.total) {
-            a[0] = o;
-            a[2] = a[4] = c;
-            a[1] = a[3] = -1;
-          } else if (gaps) {
-            a[0] = o;
-            if ((b = this.bufA.length) < c) {
-              if ((a[1] = o + b) >= this.total) {
-                a[1] = a[1] - this.total;
-              }
-              a[2] = c - b;
-            } else {
-              a[1] = a[2] = 0;
-            }
-            if ((b = this.bufB.length) < c) {
-              if ((a[3] = o - 1 - b) < 0) {
-                a[3] = a[3] + this.total;
-              }
-              a[4] = c - b;
-            } else {
-              a[3] = a[4] = 0;
-            }
-          } else {
-            a[0] = a[1] = o;
-            a[2] = a[4] = c;
-            a[3] = o
-              ? o - 1
-              : this.total - 1;
-          }
-          return true;
+          this.buffer.init();
         },
         setLayout: function(cols, rows){
           var layout, items, count, a;
-          rows == null && (rows = 0);
           layout = this.layout;
           items = this.items;
+          if (!cols) {
+            cols = layout[0];
+          }
           if (!rows) {
             rows = layout[1];
           }
@@ -1529,161 +1726,22 @@ w3ui = function(){
           }
           return true;
         },
-        setItem: function(record){
-          var o, A, B, i;
-          if (!(o = this.offset)[2]) {
-            return false;
-          }
-          o = this.offset;
-          A = this.bufA;
-          B = this.bufB;
-          if (i < this.range[2]) {
-            i = A.length;
-            A[i] = record;
-            i = (o = o[0] - o[1]) >= 0
-              ? i - o
-              : i - this.group.config.total - o;
-            if (i >= 0 && i < this.count) {
-              this.items[i].set(record);
-            }
-          } else {
-            i = this.bufB.length;
-            this.bufB[i] = record;
-            i = (o = o[1] - o[0]) > 0
-              ? i - o
-              : i - this.group.config.total - o;
-            if (i < 0 && i + this.count >= 0) {
-              this.items[-i - 1].set(record);
-            }
+        setOffset: function(i){
+          this.offset[0] = a;
+          if (this.setBuffer()) {
+            this.offset[1] = a;
+            this.offset[2] = 0;
+            this.charged++;
+            this.group.charge(this);
           }
           return true;
         },
-        setBuffer: function(){
-          var A, B, R, a, b, c, d, o, O, i, j, k;
-          A = this.bufA;
-          B = this.bufB;
-          R = this.range;
-          a = A.length;
-          b = B.length;
-          c = this.group.config.total;
-          d = this.page;
-          o = this.offset[0];
-          O = this.offset[1];
-          if ((i = o - O) > 0 && c - i < i) {
-            i = i - c;
-          } else if (i < 0 && c + i < -i) {
-            i = c + i;
-          }
-          if (Math.abs(i) > d + d - 1) {
-            this.clearBuffer();
-            return 2;
-          }
-          d = d >>> 1;
-          if (i === 0 || (i > 0 && d - i > 0)) {
-            j = -1;
-            while (++j < this.count) {
-              if (i < a) {
-                this.items[j].set(A[i++]);
-              } else {
-                this.items[j].set();
-              }
-            }
-            return 0;
-          }
-          if (i < 0 && d + i >= 0) {
-            j = -1;
-            k = -i - 1;
-            while (++j < this.count) {
-              if (k >= 0 && b - k > 0) {
-                this.items[j].set(B[k]);
-              } else if (k < 0 && a + k > 0) {
-                if (this.config.wrapAround) {
-                  this.items[j].set(A[-k - 1]);
-                } else {
-                  this.items[j].set();
-                }
-              } else {
-                this.items[j].set();
-              }
-              --k;
-            }
-            return 0;
-          }
-          if (i > 0 && a - i > 0) {
-            j = b;
-            while (j < i) {
-              B[j++] = null;
-            }
-            j = i;
-            k = 0;
-            while (k < b && j < this.page) {
-              B[j++] = B[k++];
-            }
-            B.length = j;
-            j = i - 1;
-            k = 0;
-            while (~j) {
-              B[j--] = A[k++];
-            }
-            while (k < a) {
-              A[++j] = A[k++];
-            }
-            A.length = k = j + 1;
-            j = this.count;
-            while (j) {
-              if (--j < k) {
-                this.items[j].set(A[j]);
-              } else {
-                this.items[j].set();
-              }
-            }
-            this.setRange(o, true);
-            return 1;
-          }
-          if (i < 0 && b + i > 0) {
-            i = -i;
-            j = a;
-            while (j < i) {
-              A[j++] = null;
-            }
-            j = i;
-            k = 0;
-            while (k < a && j < this.page) {
-              A[j++] = A[k++];
-            }
-            A.length = j;
-            j = i - 1;
-            k = 0;
-            while (~j) {
-              A[j--] = B[k++];
-            }
-            while (k < b) {
-              B[++j] = B[k++];
-            }
-            B.length = j + 1;
-            j = -1;
-            k = A.length;
-            while (++j < this.count) {
-              if (j < k) {
-                this.items[j].set(A[j]);
-              } else {
-                this.items[j].set();
-              }
-            }
-            this.setRange(o, true);
-            return -1;
-          }
-          this.clearBuffer();
-          return -2;
+        setTotal: function(i){
+          return this.buffer.init(i);
         },
-        clearBuffer: function(){
+        setItem: function(record){
           var i;
-          this.setRange(this.offset[0]);
-          this.bufA.length = this.bufB.length = 0;
-          i = this.count;
-          while (i) {
-            this.items[--i].set();
-          }
+          return i = this.buffer.set(record);
         }
       };
       return w3ui.factory('gridlist', Block);
@@ -2105,9 +2163,18 @@ w3ui = function(){
       };
     }(),
     catalog: function(){
-      var configGroups, stateGroups, Visor;
-      configGroups = ['locale', 'routes', 'order', 'currency', 'cart', 'price', 'total'];
+      var configGroups, stateGroups, groupLevel, Visor;
+      configGroups = ['locale', 'routes', 'order', 'currency', 'cart', 'price', 'layout', 'total'];
       stateGroups = ['lang', 'route', 'range', 'order', 'category', 'price'];
+      groupLevel = {
+        lang: 4,
+        route: 3,
+        range: 1,
+        order: 1,
+        category: 2,
+        price: 2
+      };
+      groupLevel = w3ui.assign(groupLevel, stateGroups);
       Visor = function(o){
         this.root = o.root;
         this.brand = o.brand || 'w3ui';
@@ -2265,50 +2332,58 @@ w3ui = function(){
         }
       };
       return async function(o, autostart){
-        var sup, root, brand, master, console, blocks, groups, time, a, b, c, d, e, i$, len$, ref$;
+        var sup, root, brand, console, blocks, groups, time, a, ref$, b, i$, len$, e;
         autostart == null && (autostart = true);
         sup = new Visor(o);
         root = sup.root;
         brand = sup.brand;
-        master = sup.master;
         console = sup.console;
         blocks = sup.blocks;
         groups = sup.groups;
         time = window.performance.now();
         (await w3ui.delay(0));
         console.log('new supervisor');
-        for (a in master) {
-          b = root.querySelectorAll('.' + brand + '.' + a);
-          if (!(c = b.length)) {
-            continue;
-          }
-          b = Array.from(b);
-          d = -1;
-          while (++d < c) {
-            blocks[blocks.length] = e = new master[a](b[d]);
-            if (e.view) {
-              sup.view = e;
-            }
-          }
+        for (a in ref$ = sup.master) {
+          b = ref$[a];
+          w3ui.blocks.group(a, b, sup);
         }
-        if (!blocks.length) {
-          console.error('no blocks found');
-          return null;
-        }
-        blocks.sort(function(a, b){
-          return a.level < b.level
-            ? -1
-            : a.level === b.level ? 0 : 1;
-        });
-        for (i$ = 0, len$ = blocks.length; i$ < len$; ++i$) {
-          b = blocks[i$];
-          if (~stateGroups.indexOf(a = b.group)) {
-            if (!(c = groups[a])) {
-              groups[a] = c = new w3ui.blocks.group(a, this);
-            }
-            c.blocks.push(b);
-          }
-        }
+        /***
+        # create master blocks {{{
+        for a of master
+        	# search DOM nodes
+        	b = root.querySelectorAll '.'+brand+'.'+a
+        	if not (c = b.length)
+        		continue
+        	# iterate found
+        	b = Array.from b
+        	d = -1
+        	while ++d < c
+        		# construct
+        		blocks[*] = e = new master[a] b[d]
+        		# determine view
+        		sup.view = e if e.view
+        # check
+        if not blocks.length
+        	console.error 'no blocks found'
+        	return null
+        # sort by priority level (ascending)
+        blocks.sort (a, b) ->
+        	return if a.level < b.level
+        		then -1
+        		else if a.level == b.level
+        			then 0
+        			else 1
+        # }}}
+        # create block groups {{{
+        # each group represents a state block
+        for b in blocks when ~(stateGroups.indexOf a = b.group)
+        	# create
+        	if not (c = groups[a])
+        		groups[a] = c = new w3ui.blocks.group a, @
+        	# add block
+        	c.blocks.push b
+        # }}}
+        /***/
         (await w3ui.delay(0));
         console.log('initializing..');
         if (!this.config) {
