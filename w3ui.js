@@ -12,30 +12,43 @@ w3ui = function(){
     this.brandStyle = 'font-weight:bold;color:skyblue';
     this.logStyle = 'color:aquamarine';
     this.errorStyle = 'color:hotpink';
+    this.debugStyle = 'color:slategray';
   };
   Console.prototype = {
     'new': function(brand, debug){
-      return retrun(new Console(brand, debug));
+      return new Console(brand, debug);
     },
-    log: function(msg){
-      msg = '%c' + this.brand + ': %c' + msg;
-      console.log(msg, this.brandStyle, this.logStyle);
+    log: function(m){
+      m = '%c' + this.brand + ': %c' + m;
+      console.log(m, this.brandStyle, this.logStyle);
     },
-    error: function(msg){
-      msg = '%c' + this.brand + ': %c' + msg;
-      console.log(msg, this.brandStyle, this.errorStyle);
+    error: function(m){
+      m = '%c' + this.brand + ': %c' + m;
+      console.log(m, this.brandStyle, this.errorStyle);
     },
-    debug: function(e){
+    debug: function(e, ok){
+      var m;
       if (this.isDebug) {
-        console.log('%c' + this.brand + ':', this.brandStyle, e);
+        m = '%c' + this.brand + ': ';
+        if (typeof e === 'string') {
+          m += '%c' + e;
+          if (arguments.length === 1) {
+            console.log(m, this.brandStyle, this.debugStyle);
+          } else {
+            m += '.. %c' + ((ok && 'ok') || '');
+            console.log(m, this.brandStyle, this.debugStyle, this.logStyle);
+          }
+        } else {
+          console.log(e);
+        }
       }
     }
   };
   Object.assign(w3ui, {
-    console: new Console('w3ui', true),
+    console: Object.freeze(new Console('w3ui', true)),
     metaconstruct: function(){
       var map, construct;
-      map = new WeakMap();
+      map = Object.create(null);
       construct = function(props){
         return function(){
           var i$, ref$, len$, prop;
@@ -45,18 +58,25 @@ w3ui = function(){
           }
         };
       };
-      return function(props){
-        var a;
-        if (!(a = map.get(props))) {
-          map.set(props, a = construct(props));
+      return function(props, defs){
+        var key, f;
+        if (!(props instanceof Array)) {
+          defs = props;
+          props = Object.getOwnPropertyNames(props);
         }
-        return a;
+        key = props.join(',');
+        if (!(f = map[key])) {
+          map[key] = f = construct(props);
+        }
+        return defs
+          ? w3ui.attach(defs, new f())
+          : new f();
       };
     }(),
-    assign: function(cfg, defs){
+    attach: function(cfg, defs){
       var a;
       if (defs && defs instanceof Array) {
-        defs = new w3ui.metaconstruct(defs);
+        defs = w3ui.metaconstruct(defs);
       }
       if (cfg && defs) {
         for (a in defs) {
@@ -294,7 +314,12 @@ w3ui = function(){
     var nodeEvents, blockEvents, Events, getEvents;
     nodeEvents = new WeakMap();
     blockEvents = new WeakMap();
-    Events = w3ui.metaconstruct(['hover', 'focus', 'click', 'mmove']);
+    Events = function(){
+      this.hover = null;
+      this.focus = null;
+      this.click = null;
+      this.mmove = null;
+    };
     getEvents = function(node){
       var e;
       if (!(e = nodeEvents.get(node))) {
@@ -546,7 +571,7 @@ w3ui = function(){
         var this$ = this;
         this.root = root;
         this.rootBox = root.firstChild;
-        this.level = o.hasOwnPropery('level')
+        this.level = o.hasOwnProperty('level')
           ? o.level
           : group.level;
         this.config = group['super'].config;
@@ -590,16 +615,14 @@ w3ui = function(){
         }
       };
       return function(name, level, sup, o){
-        debugger;
         var console, group, blocks, a, b, c, d;
         console = sup.console;
         group = new Group(name, level, sup);
         blocks = group.blocks;
-        console.debug('group "' + name + '"..');
         for (a in o) {
           b = sup.root.querySelectorAll('.' + sup.brand + '.' + a);
           if (!(c = b.length)) {
-            console.debug('block "' + a + '".. skip');
+            console.debug('block <' + a + '>', 0);
             continue;
           }
           b = Array.from(b);
@@ -607,7 +630,7 @@ w3ui = function(){
           while (++d < c) {
             blocks[blocks.length] = new Block(b[d], group, o[a]);
           }
-          console.debug('block "' + a + '".. ok');
+          console.debug('block <' + a + '>', 1);
         }
         if (!blocks.length) {
           return null;
@@ -1596,7 +1619,7 @@ w3ui = function(){
         this.root = o.root;
         this.rootBox = o.root.firstChild;
         this.item = o.item || w3ui.grid;
-        this.cfg = w3ui.assign(o.cfg, {
+        this.cfg = w3ui.attach(o.cfg, {
           mode: 0,
           cols: [1, 4],
           rows: [2, 0],
@@ -2163,31 +2186,30 @@ w3ui = function(){
       };
     }(),
     catalog: function(){
-      var configGroups, stateGroups, groupLevel, Visor;
+      var configGroups, groupLevel, stateGroups, SuperVisor;
       configGroups = ['locale', 'routes', 'order', 'currency', 'cart', 'price', 'layout', 'total'];
-      stateGroups = ['lang', 'route', 'range', 'order', 'category', 'price'];
-      groupLevel = {
+      groupLevel = w3ui.metaconstruct({
         lang: 4,
         route: 3,
-        range: 1,
-        order: 1,
         category: 2,
-        price: 2
-      };
-      groupLevel = w3ui.assign(groupLevel, stateGroups);
-      Visor = function(o){
+        price: 2,
+        range: 1,
+        order: 1
+      });
+      stateGroups = Object.getOwnPropertyNames(groupLevel);
+      SuperVisor = function(o){
         this.root = o.root;
         this.brand = o.brand || 'w3ui';
         this.console = w3ui.console['new'](this.brand, o.debug);
         this.slave = o.s;
         this.master = o.m;
-        this.fetch = httpFetch.create({
+        this.fetch = w3fetch.create({
           baseUrl: o.apiURL,
           mounted: true,
           notNull: true,
           method: 'POST'
         });
-        this.stream = httpFetch.create({
+        this.stream = w3fetch.create({
           baseUrl: o.apiURL,
           mounted: true,
           notNull: true,
@@ -2196,9 +2218,9 @@ w3ui = function(){
           parseResponse: 'stream'
         });
         this.blocks = [];
-        this.groups = Object.create(null);
-        this.state = new w3ui.metaconstruct(stateGroups);
-        this.config = o.config ? w3ui.assign(o.config, configGroups) : null;
+        this.groups = [];
+        this.state = w3ui.metaconstruct(stateGroups);
+        this.config = o.config ? w3ui.attach(o.config, configGroups) : null;
         this.counter = 0;
         this.lock = null;
         this.level = 0;
@@ -2207,7 +2229,7 @@ w3ui = function(){
         this.view = null;
         this.steady = null;
       };
-      Visor.prototype = {
+      SuperVisor.prototype = {
         loop: async function(){
           var console, blocks, a, b, i$, len$, res;
           if (this.counter) {
@@ -2227,7 +2249,7 @@ w3ui = function(){
             this.dirty = 0;
             a = blocks.length;
             while (~--a) {
-              if ((b = blocks[a]).accept && !b.accept(this.level)) {
+              if ((b = blocks[a]).check && !b.check(this.level)) {
                 this.dirty = -1;
                 break;
               }
@@ -2317,82 +2339,73 @@ w3ui = function(){
           }
         },
         stop: function(){
-          if (!this.counter) {
-            return false;
+          if (this.counter) {
+            if (this.lock) {
+              this.lock.resolve();
+            }
+            if (this.req) {
+              this.req.cancel();
+            }
+            this.dirty = this.counter = -1;
+            this.lock = this.req = null;
           }
-          if (this.lock) {
-            this.lock.resolve();
-          }
-          if (this.req) {
-            this.req.cancel();
-          }
-          this.dirty = this.counter = -1;
-          this.lock = this.req = null;
           return this.steady;
         }
       };
-      return async function(o, autostart){
-        var sup, root, brand, console, blocks, groups, time, a, ref$, b, i$, len$, e;
-        autostart == null && (autostart = true);
-        sup = new Visor(o);
+      return async function(o, autoloop){
+        var sup, console, root, brand, blocks, groups, time, i$, ref$, len$, a, b, j$, len1$, timed, e;
+        autoloop == null && (autoloop = true);
+        sup = new SuperVisor(o);
+        console = sup.console;
         root = sup.root;
         brand = sup.brand;
-        console = sup.console;
         blocks = sup.blocks;
         groups = sup.groups;
-        time = window.performance.now();
-        (await w3ui.delay(0));
+        time = performance.now();
         console.log('new supervisor');
-        for (a in ref$ = sup.master) {
-          b = ref$[a];
-          w3ui.blocks.group(a, b, sup);
+        for (i$ = 0, len$ = (ref$ = stateGroups).length; i$ < len$; ++i$) {
+          a = ref$[i$];
+          if (b = sup.master[a]) {
+            b = w3ui.blocks.group(a, groupLevel[a], sup, b);
+            if (b) {
+              groups[groups.length] = b;
+            }
+          }
         }
-        /***
-        # create master blocks {{{
-        for a of master
-        	# search DOM nodes
-        	b = root.querySelectorAll '.'+brand+'.'+a
-        	if not (c = b.length)
-        		continue
-        	# iterate found
-        	b = Array.from b
-        	d = -1
-        	while ++d < c
-        		# construct
-        		blocks[*] = e = new master[a] b[d]
-        		# determine view
-        		sup.view = e if e.view
-        # check
-        if not blocks.length
-        	console.error 'no blocks found'
-        	return null
-        # sort by priority level (ascending)
-        blocks.sort (a, b) ->
-        	return if a.level < b.level
-        		then -1
-        		else if a.level == b.level
-        			then 0
-        			else 1
-        # }}}
-        # create block groups {{{
-        # each group represents a state block
-        for b in blocks when ~(stateGroups.indexOf a = b.group)
-        	# create
-        	if not (c = groups[a])
-        		groups[a] = c = new w3ui.blocks.group a, @
-        	# add block
-        	c.blocks.push b
-        # }}}
-        /***/
+        if (!groups.length) {
+          console.error('empty');
+          return null;
+        }
+        for (i$ = 0, len$ = groups.length; i$ < len$; ++i$) {
+          a = groups[i$];
+          for (j$ = 0, len1$ = (ref$ = a.blocks).length; j$ < len1$; ++j$) {
+            b = ref$[j$];
+            blocks[blocks.length] = b;
+          }
+        }
+        blocks.sort(function(a, b){
+          return a.level < b.level
+            ? -1
+            : a.level === b.level ? 0 : 1;
+        });
+        for (i$ = 0, len$ = blocks.length; i$ < len$; ++i$) {
+          a = blocks[i$];
+          if (a.view) {
+            sup.view = a;
+          }
+        }
+        timed = performance.now();
+        console.log('constructed ' + blocks.length + ' (' + (timed - time | 0) + 'ms)');
+        time = timed;
         (await w3ui.delay(0));
-        console.log('initializing..');
-        if (!this.config) {
-          if ((a = (await fetch(state))) instanceof Error) {
+        if (!sup.config) {
+          debugger;
+          if ((a = (await sup.fetch(sup.state))) instanceof Error) {
             console.error('failed to fetch configuration');
             console.debug(a);
             return null;
           }
-          this.config = w3ui.assign(a, configGroups);
+          sup.config = w3ui.attach(a, configGroups);
         }
         try {
           for (i$ = 0, len$ = (ref$ = stateGroups).length; i$ < len$; ++i$) {
@@ -2419,10 +2432,11 @@ w3ui = function(){
             a.root.classList.add('v');
           }
         }
+        timed = performance.now();
+        console.log('initialized (' + (timed - time | 0) + 'ms)');
         (await w3ui.delay(0));
-        time = window.performance.now() - time | 0;
-        console.log('ready (' + time + 'ms)');
-        if (autostart) {
+        if (autoloop) {
+          console.debug('autoloop');
           sup.loop();
         }
         return sup;

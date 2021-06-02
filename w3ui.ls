@@ -1,6 +1,7 @@
 "use strict"
 w3ui = do ->
-	# check requirements {{{
+	# requirements {{{
+	# check
 	# TODO: possess browser apis
 	# TODO: secure loader?
 	# TODO:
@@ -9,49 +10,73 @@ w3ui = do ->
 	# - rename section => treeview
 	# - category count display (extra)
 	# - static paginator max-width auto-calc
-	# }}}
-	# prepare {{{
-	# possess empty objects without a prototype (theoretically better accessed)
+	# prepare
+	# create empty objects
 	w3ui    = (Object.create null)
 	events  = (Object.create null)
 	blocks  = (Object.create null)
+	# create console constructor
 	Console = (BRAND, DEBUG) !->
 		@brand      = BRAND
 		@isDebug    = DEBUG
 		@brandStyle = 'font-weight:bold;color:skyblue'
 		@logStyle   = 'color:aquamarine'
 		@errorStyle = 'color:hotpink'
+		@debugStyle = 'color:slategray'
 	Console.prototype =
-		new: (brand, debug) ->
-			retrun new Console brand, debug
-		log: (msg) !->
-			msg = '%c'+@brand+': %c'+msg
-			console.log msg, @brandStyle, @logStyle
-		error: (msg) !->
-			msg = '%c'+@brand+': %c'+msg
-			console.log msg, @brandStyle, @errorStyle
-		debug: (e) !->
+		new: (brand, debug) -> new Console brand, debug
+		log: (m) !->
+			m = '%c'+@brand+': %c'+m
+			console.log m,@brandStyle,@logStyle
+		error: (m) !->
+			m = '%c'+@brand+': %c'+m
+			console.log m,@brandStyle,@errorStyle
+		debug: (e, ok) !->
 			if @isDebug
-				console.log '%c'+@brand+':', @brandStyle, e
+				m = '%c'+@brand+': '
+				if typeof e == 'string'
+					m += '%c'+e
+					if arguments.length == 1
+						console.log m,@brandStyle,@debugStyle
+					else
+						m += '.. %c'+((ok and 'ok') or '')
+						console.log m,@brandStyle,@debugStyle,@logStyle
+				else
+					console.log e
 	# }}}
 	Object.assign w3ui, { # {{{
-		console: new Console 'w3ui', true
+		console: Object.freeze (new Console 'w3ui', true)
 		metaconstruct: do -> # {{{
-			map = new WeakMap!
+			map = Object.create null
 			construct = (props) -> !->
 				for prop in props
 					@[prop] = null
-			return (props) ->
-				if not (a = map.get props)
-					map.set props, (a = construct props)
-				return a
+			return (props, defs) ->
+				# check
+				if not (props instanceof Array)
+					# get object keys (ordered) and
+					# use values as defaults
+					defs  = props
+					props = Object.getOwnPropertyNames props
+				# determine map key
+				key = props.join ','
+				# get or create constructor
+				if not (f = map[key])
+					map[key] = f = construct props
+				# create object and attach defaults
+				return if defs
+					then w3ui.attach defs, (new f!)
+					else new f!
 		# }}}
-		assign: (cfg, defs) -> # {{{
+		attach: (cfg, defs) -> # {{{
+			# construct defaults
 			if defs and defs instanceof Array
-				defs = new w3ui.metaconstruct defs
+				defs = w3ui.metaconstruct defs
+			# merge safely
 			if cfg and defs
 				for a of defs when cfg.hasOwnProperty a
 					defs[a] = cfg[a]
+			# complete
 			return if defs
 				then defs
 				else Object.create null
@@ -303,10 +328,12 @@ w3ui = do ->
 		# prepare
 		nodeEvents  = new WeakMap! # DOM node => events
 		blockEvents = new WeakMap! # block => events
+		Events = !->
+			@hover = null
+			@focus = null
+			@click = null
+			@mmove = null
 		# create constructor
-		Events = w3ui.metaconstruct [
-			'hover' 'focus' 'click' 'mmove'
-		]
 		getEvents = (node) ->
 			# extract
 			if not (e = nodeEvents.get node)
@@ -565,11 +592,11 @@ w3ui = do ->
 	Object.assign blocks, { # {{{
 		### PRIMITIVE (base constructors)
 		group: do -> # {{{
-			Block = (root, group, o) !-> # {{{
-				###
+			Block = (root, group, o) !->
+				# {{{
 				@root    = root
 				@rootBox = root.firstChild
-				@level   = if o.hasOwnPropery 'level'
+				@level   = if o.hasOwnProperty 'level'
 					then o.level
 					else group.level
 				@config  = group.super.config
@@ -583,8 +610,7 @@ w3ui = do ->
 					group.super.charge @ if @level
 				###
 				o.construct.call @ if o.construct
-				###
-			# }}}
+				# }}}
 			Group = (name, level, sup) !->
 				# {{{
 				@name   = name
@@ -607,19 +633,16 @@ w3ui = do ->
 				# }}}
 			return (name, level, sup, o) ->
 				# create a group
-				debugger
 				console = sup.console
 				group   = new Group name, level, sup
 				blocks  = group.blocks
-				console.debug 'group "'+name+'"..'
-				# iterate options and
 				# create blocks
 				for a of o
 					# find all DOM nodes of this block,
 					# down to the supervisor's root
 					b = sup.root.querySelectorAll '.'+sup.brand+'.'+a
 					if not (c = b.length)
-						console.debug 'block "'+a+'".. skip'
+						console.debug 'block <'+a+'>', 0
 						continue
 					# iterate found nodes and
 					# construct master block
@@ -627,7 +650,7 @@ w3ui = do ->
 					d = -1
 					while ++d < c
 						blocks[*] = new Block b[d], group, o[a]
-					console.debug 'block "'+a+'".. ok'
+					console.debug 'block <'+a+'>', 1
 				# check empty
 				if not blocks.length
 					return null
@@ -1716,7 +1739,7 @@ w3ui = do ->
 				@root    = o.root
 				@rootBox = o.root.firstChild
 				@item    = o.item or w3ui.grid
-				@cfg     = w3ui.assign o.cfg, {
+				@cfg     = w3ui.attach o.cfg, {
 					# grid container
 					# display mode: 0=cards (vertical), 1=lines (horizontal)
 					mode: 0
@@ -2302,10 +2325,10 @@ w3ui = do ->
 			return (o) ->
 				return new Block o
 		# }}}
-		# TODO: table
 		### SUPERVISORS
 		catalog: do -> # {{{
-			configGroups = [ # {{{
+			# {{{
+			configGroups = [
 				'locale'  # interface texts
 				'routes'  # {id:route} navigation
 				'order'   # order tags to use for ordering
@@ -2315,41 +2338,30 @@ w3ui = do ->
 				'layout'  # view layout
 				'total'   # total records count
 			]
-			# }}}
-			stateGroups = [ # {{{
-				'lang'    # [primary,lang2,..]
-				'route'   # [menu-id,navigation-id]
-				'range'   # [offset,o1,o2,o3,o4]
-				'order'   # [tag,variant]
-				'category'# [id-1..N],[..],..
-				'price'   # [min,max]
-			]
-			# }}}
-			groupLevel = { # {{{
-				lang:     4
-				route:    3
-				range:    1
-				order:    1
-				category: 2
-				price:    2
+			groupLevel = w3ui.metaconstruct {
+				lang:     4 # [primary,lang2,..]
+				route:    3 # [menu-id,navigation-id]
+				category: 2 # [[id-1..N],[..],..]
+				price:    2 # [min,max]
+				range:    1 # [offset,o1,o2,o3,o4]
+				order:    1 # [tag,variant]
 			}
-			groupLevel = w3ui.assign groupLevel, stateGroups
+			stateGroups = Object.getOwnPropertyNames groupLevel
 			# }}}
-			Visor = (o) !->
+			SuperVisor = (o) !->
 				# {{{
-				# create object shape
 				@root    = o.root
 				@brand   = o.brand or 'w3ui'
 				@console = w3ui.console.new @brand, o.debug
 				@slave   = o.s
 				@master  = o.m
-				@fetch   = httpFetch.create {
+				@fetch   = w3fetch.create {
 					baseUrl: o.apiURL
 					mounted: true
 					notNull: true
 					method: 'POST'
 				}
-				@stream  = httpFetch.create {
+				@stream  = w3fetch.create {
 					baseUrl: o.apiURL
 					mounted: true
 					notNull: true
@@ -2358,22 +2370,21 @@ w3ui = do ->
 					parseResponse: 'stream'
 				}
 				@blocks  = []
-				@groups  = Object.create null
-				@state   = new w3ui.metaconstruct stateGroups
+				@groups  = []
+				@state   = w3ui.metaconstruct stateGroups
 				@config  = if o.config
-					then w3ui.assign o.config, configGroups
+					then w3ui.attach o.config, configGroups
 					else null
-				#@resizer = null ???
 				###
 				@counter = 0    # total cycles (active)
 				@lock    = null # charge promise
 				@level   = 0    # charge level
 				@dirty   = -1   # charge state
 				@req     = null # stream request promise
-				@view    = null # stream reciver
+				@view    = null # stream receiver
 				@steady  = null # loop promise
 				# }}}
-			Visor.prototype =
+			SuperVisor.prototype =
 				loop: ->> # {{{
 					# check already started
 					if @counter
@@ -2400,11 +2411,11 @@ w3ui = do ->
 							continue
 						# set clean
 						@dirty = 0
-						# to accept the charge,
-						# call masters back (in reversed order)
+						# to check ready for the charge,
+						# call masters back (high to low)
 						a = blocks.length
 						while ~--a
-							if (b = blocks[a]).accept and not b.accept @level
+							if (b = blocks[a]).check and not b.check @level
 								@dirty = -1 # programmatic restart
 								break
 						# restart or skip zero level
@@ -2417,10 +2428,9 @@ w3ui = do ->
 							b.lock @level if b.lock
 						# }}}
 						# charge {{{
-						# skip a moment
+						# blink
 						await w3ui.delay 0
-						if @dirty
-							continue
+						continue if @dirty
 						# initiate state request
 						res  = await (@req = @stream @state)
 						@req = null
@@ -2435,7 +2445,7 @@ w3ui = do ->
 							break
 						# }}}
 						# sync and unlock {{{
-						# set total records
+						# set total records available
 						if (@config.total = await res.readInt!) == null
 							console.error 'stream failed'
 							res.cancel!
@@ -2458,11 +2468,11 @@ w3ui = do ->
 							res.cancel!
 							continue
 						# discharge
-						@view.setItem null # hint
+						@view.setItem null # EOD
 						while not @dirty and a = await res.readJSON!
 							# check
 							if a instanceof Error
-								# fatal
+								# exit
 								console.error 'stream failed: '+a.message
 								console.debug a
 								res.cancel!
@@ -2486,63 +2496,50 @@ w3ui = do ->
 					# level up
 					if block.level > @level
 						@level = block.level
-					# operate
+					# check
 					if @lock.pending
-						# expected release (clear) or
-						# timeout restart (dirty)
+						# start (clean) or restart (dirty)
 						@lock.resolve (@lock.pending == 1)
 					else
-						# unexpected, activate dirty timeout and
-						# terminate fetcher
+						# process interruption (activate delay timeout)
 						@dirty = 1
 						@req.cancel! if @req
 				# }}}
 				stop: -> # {{{
 					# check
-					if not @counter
-						return false
-					# interrupt loop
-					@lock.resolve! if @lock
-					@req.cancel! if @req
-					# reset
-					@dirty = @counter = -1
-					@lock  = @req = null
+					if @counter
+						# interrupt loop
+						@lock.resolve! if @lock
+						@req.cancel! if @req
+						# reset
+						@dirty = @counter = -1
+						@lock  = @req = null
 					# complete
 					return @steady
 				# }}}
-			return (o, autostart = true) ->>
-				# CONSTRUCT
-				sup     = new Visor o
+			return (o, autoloop = true) ->>
+				# CONSTRUCT {{{
+				# prepare
+				sup     = new SuperVisor o
+				console = sup.console
 				root    = sup.root
 				brand   = sup.brand
-				console = sup.console
 				blocks  = sup.blocks
 				groups  = sup.groups
-				time    = window.performance.now!
-				await w3ui.delay 0
+				time    = performance.now!
 				console.log 'new supervisor'
-				# INITIALIZE
-				for a,b of sup.master
-					w3ui.blocks.group a, b, sup
-				/***
-				# create master blocks {{{
-				for a of master
-					# search DOM nodes
-					b = root.querySelectorAll '.'+brand+'.'+a
-					if not (c = b.length)
-						continue
-					# iterate found
-					b = Array.from b
-					d = -1
-					while ++d < c
-						# construct
-						blocks[*] = e = new master[a] b[d]
-						# determine view
-						sup.view = e if e.view
-				# check
-				if not blocks.length
-					console.error 'no blocks found'
+				# create groups
+				for a in stateGroups when b = sup.master[a]
+					b = w3ui.blocks.group a, groupLevel[a], sup, b
+					groups[*] = b if b
+				# check empty
+				if not groups.length
+					console.error 'empty'
 					return null
+				# collect blocks (push in)
+				for a in groups
+					for b in a.blocks
+						blocks[*] = b
 				# sort by priority level (ascending)
 				blocks.sort (a, b) ->
 					return if a.level < b.level
@@ -2550,31 +2547,27 @@ w3ui = do ->
 						else if a.level == b.level
 							then 0
 							else 1
-				# }}}
-				# create block groups {{{
-				# each group represents a state block
-				for b in blocks when ~(stateGroups.indexOf a = b.group)
-					# create
-					if not (c = groups[a])
-						groups[a] = c = new w3ui.blocks.group a, @
-					# add block
-					c.blocks.push b
-				# }}}
-				/***/
+				# find view block
+				for a in blocks when a.view
+					sup.view = a
+				# report
+				timed = performance.now!
+				console.log 'constructed '+blocks.length+' ('+((timed - time).|.0)+'ms)'
+				time  = timed
 				await w3ui.delay 0
-				console.log 'initializing..'
-				# set configuration {{{
-				# check wasnt determined (CSR init)
-				if not @config
-					# fetch from remote
-					if (a = await fetch state) instanceof Error
+				# }}}
+				# INITIALIZE {{{
+				# check configuration
+				if not sup.config
+					# CSR init: fetch from remote
+					debugger
+					if (a = await sup.fetch sup.state) instanceof Error
 						console.error 'failed to fetch configuration'
 						console.debug a
 						return null
 					# set
-					@config = w3ui.assign a, configGroups
-				# }}}
-				# set state {{{
+					sup.config = w3ui.attach a, configGroups
+				# set state
 				try
 					# initialize groups in proper order,
 					# blocks will inject state values
@@ -2590,12 +2583,14 @@ w3ui = do ->
 				# set roots constructed
 				for a in blocks when a.root
 					a.root.classList.add 'v'
-				# }}}
-				# COMPLETE
+				# report
+				timed = performance.now!
+				console.log 'initialized ('+((timed - time).|.0)+'ms)'
 				await w3ui.delay 0
-				time = (window.performance.now! - time) .|. 0
-				console.log 'ready ('+time+'ms)'
-				sup.loop! if autostart # nowait
+				# }}}
+				if autoloop
+					console.debug 'autoloop'
+					sup.loop!
 				return sup
 		# }}}
 	}
