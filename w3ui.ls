@@ -30,7 +30,7 @@ w3ui = do ->
 		# }}}
 	) ->
 		# PREPARE {{{
-		# check internal requirements
+		# check internal requirements only
 		a = REQS.length - 1
 		while --a
 			if not arguments[a]
@@ -51,7 +51,8 @@ w3ui = do ->
 				'font-weight:bold;color:skyblue' # 0:brand
 				'color:aquamarine' # 1:log
 				'color:violet' # 2:error
-				'color:slategray' # 3:debug
+				'color:slateblue' # 3:debug-brand
+				'color:slategray' # 4:debug
 			]
 			new: (brand) -> new Console @brand+':'+brand
 			log: (m) !-> # {{{
@@ -71,13 +72,13 @@ w3ui = do ->
 					if typeof e == 'string'
 						m += '%c'+e
 						if arguments.length == 1
-							@console.log m,s.0,s.3
+							@console.log m,s.3,s.4
 						else
 							ok = if typeof ok == 'string'
 								then ok
 								else ((ok and 'ok') or '')
 							m += '.. %c'+ok
-							@console.log m,s.0,s.3,s.1
+							@console.log m,s.3,s.4,s.1
 					else
 						@console.log e
 			# }}}
@@ -565,10 +566,11 @@ w3ui = do ->
 				# }}}
 			}
 		# }}}
-		Object.assign blocks, { # {{{
+		Object.assign blocks, {
 			### UTILITY (factories)
 			construct: do -> # {{{
-				Block = (map, o) !-> # {{{
+				Block = (map, o) !->
+					# {{{
 					# base
 					@console = o.console
 					@root    = o.root
@@ -577,12 +579,28 @@ w3ui = do ->
 					# state
 					@focused = @hovered = 0
 					@locked  = 1
-					# attach everything
-					for a of map
+					# wraps
+					@init = @init map.init
+					@lock = @lock map.lock
+					# attach unique
+					for a of map when not @hasOwnProperty a
 						@[a] = map[a]
 					# complete
 					@construct o
 				# }}}
+				Block.prototype =
+					init: (func) -> !~> # {{{
+						# execute handler
+						func.call @
+						# set constructed
+						@root.classList.add 'v'
+					# }}}
+					lock: (func) -> (v) !~> # {{{
+						# set functional
+						@rootBox.classList.toggle 'v', !(@locked = v)
+						# execute handler
+						func.call @, v
+					# }}}
 				return (name, map) ->
 					# prepare
 					map = map! if typeof map == 'function'
@@ -601,22 +619,14 @@ w3ui = do ->
 							for d in (a.split ' ')
 								if not b.includes d
 									c[*] = d
-						# determine console brand
+						# determine console
+						o.console = console # select default
 						if c.length
-							# determine debug mode
-							d = if o.hasOwnProperty 'debug'
-								then !!o.debug # specified
-								else true # should be off explicitly
 							# create custom
-							a = c.join ':'
-							console = w3ui.console.new a, d
-						else
-							# select default
-							console = w3ui.console
-						o.console = console
-						# determine full name (let custom be first)
-						debugger
-						o.className = a = (c ++ b).join ' '
+							a = (c.slice 0, 2).join ':'
+							o.console = console.new a
+						# determine full name
+						o.className = a = (b ++ c).join ' '
 						# }}}
 						# manipulate DOM (JSON-in-HTML) and
 						# determine block configuration
@@ -627,32 +637,31 @@ w3ui = do ->
 							# correct class
 							if (b = o.root).className != a
 								o.root.className = a
-							# check rootBox
-							if not b.firstChild
+							# checkout rootBox
+							if not (c = b.firstChild)
 								# no configuration in DOM,
 								# create and add missing nodes
-								# TODO: placeholder
 								c = document.createElement 'div'
 								b.appendChild c
+								# TODO: placeholder
 								###
-							else if c = b.innerHTML
+							else if a = c.innerHTML
 								# configuration in HTML comment (JSON-in-HTML),
 								# zap current content
 								# https://stackoverflow.com/questions/3955229/remove-all-child-elements-of-a-dom-node-in-javascript
-								while b.firstChild
-									b.removeChild b.lastChild
+								while c.firstChild
+									c.removeChild c.lastChild
 								# check proper length of the string,
 								# it must include at least 9 chars, <!--{ and }-->
-								if c.length > 9
+								if a.length > 9
 									try
 										# stored config correctness is assumed (JSON object),
 										# parse into object
-										a = c.slice 4, (c.length - 3)
-										a = JSON.parse a
-										c = a
+										c = a.slice 4, (a.length - 3)
+										c = JSON.parse c
 									catch
-										console.error 'incorrect SSR output (JSON-in-HTML)'
-										console.debug c
+										o.console.error 'incorrect SSR input (JSON-in-HTML)'
+										o.console.debug a
 										c = {}
 									# merge specified (CSR) over extracted (SSR)
 									o.cfg = if o.cfg
@@ -662,7 +671,8 @@ w3ui = do ->
 							###
 							# CSR: write
 							# <div class="{className}" style="{style}">
-							#   <div><!--{opts}--></div>
+							#   <div><!--{cfg}--></div>
+							#   {placeholder}
 							# </div>
 							# create base DOM block
 							b = o.root = document.createElement 'div'
@@ -683,7 +693,7 @@ w3ui = do ->
 									b.setAttribute 'style', o.style
 							# determine content
 							if o.html
-								# straight
+								# set straight
 								box.innerHTML = o.html
 							else if o.export and o.cfg
 								# export block (store configuration)
@@ -705,15 +715,40 @@ w3ui = do ->
 						else group.level
 					@config  = group.super.config
 					@state   = group.super.state
-					@locked  = 1
-					@init    = o.init
 					@sync    = o.sync
 					@check   = o.check or null
-					@charge  = !~>
+					@charge  = @charge group
+					@locked  = 1
+					# custom
+					if o.construct.call @
+						# container (add wraps)
+						@init = @init o.init
+						@lock = @lock o.lock
+					else
+						# self-container (no wraps)
+						@init = o.init
+						@lock = o.lock
+					# }}}
+				Block.prototype =
+					init: (func) -> !~> # {{{
+						# execute handler
+						func.call @
+						# set constructed
+						@root.classList.add 'v'
+					# }}}
+					lock: (func) -> (v) !~> # {{{
+						# set functional
+						@rootBox.classList.toggle 'v', !(@locked = v)
+						# execute handler
+						func.call @, v
+					# }}}
+					charge: (group) -> !~> # {{{
+						# update coworkers
 						group.sync @
-						group.super.charge @ if @level
-					###
-					o.construct.call @ if o.construct
+						# check powered enough
+						if @level and not @locked
+							# change state
+							group.super.charge @
 					# }}}
 				Group = (name, level, sup) !->
 					# {{{
@@ -769,10 +804,8 @@ w3ui = do ->
 					# complete
 					return group
 			# }}}
-			### PRIMITIVE (constructors)
 			buffer: do -> # {{{
-				Block = (size) !->
-					# {{{
+				Block = !-> # {{{
 					@total  = -1  # total items available -1=undetermined
 					@bufA   = []  # forward buffer
 					@bufB   = []  # backward buffer
@@ -786,8 +819,8 @@ w3ui = do ->
 						0, # current buffer offset (center point)
 						0  # buffer is valid
 					]
-					# }}}
-				Block.prototype =
+				# }}}
+				Block.prototype = # {{{
 					init: (total) !-> # {{{
 					# }}}
 					/***
@@ -1037,8 +1070,11 @@ w3ui = do ->
 							@items[--i].set!
 						# done
 					# }}}
+				# }}}
 				return Block
 			# }}}
+			### PRIMITIVE (constructors)
+			# {{{
 			resizer: do -> # TODO {{{
 				Slave = (master, node) !->
 					# {{{
@@ -1445,8 +1481,8 @@ w3ui = do ->
 					return new Block a, o
 				# }}}
 			# }}}
+			# }}}
 		}
-		# }}}
 		Object.assign w3ui, {
 			blocks: Object.freeze blocks
 			events: Object.freeze events
@@ -1699,9 +1735,9 @@ w3ui = do ->
 					# all the available space which excludes pads and gaps..
 					# to be initialized..
 					@ppb  = 0       # PPB unit size
-					@pads = [       # container paddings
-						0,0,          # left+right,top+bottom
-						0             # bottom
+					@pads = [       # root paddings
+						0,0,          # left+right, top+bottom
+						0,0           # right, bottom
 					]
 					@gaps = [0,0]   # grid gaps between [columns,rows]
 					@size = [       # item dimensions in PPBs
@@ -1715,7 +1751,6 @@ w3ui = do ->
 					@ready  = w3ui.promise! # properly resized?
 					# }}}
 					@resize = w3ui.debounce (e) ~> # {{{
-						###
 						# prepare
 						# check parameter
 						if e
@@ -1758,8 +1793,14 @@ w3ui = do ->
 								else
 									c.removeProperty '--w3-factor'
 						###
-						# update layout (columns only) and complete
+						# update columns
 						@block.setLayout a
+						# resolve first forced resize and
+						# start observing the root
+						if @ready.pending
+							@ready.resolve!
+							@obs.observe @block.root
+						# done
 						return true
 						###
 					, 300, 10
@@ -1767,7 +1808,11 @@ w3ui = do ->
 				Resizer.prototype =
 					init: !-> # {{{
 						# check
-						@finit! if @obs
+						if @obs
+							# reset
+							@obs.disconnect!
+							@obs = null
+							@ready = w3ui.promise!
 						# prepare
 						# get and set container styles
 						@rootCS = s0 = getComputedStyle @block.root
@@ -1775,41 +1820,42 @@ w3ui = do ->
 						###
 						# determine unit size
 						@ppb = ppb = parseInt (s0.getPropertyValue '--w3-ppb')
-						# determine container paddings,
+						# determine root paddings,
 						# computed values are absolute and
 						# will be converted to relative ppbs
 						a    = @pads
 						b    = 'getPropertyValue'
 						a.0  = (parseFloat (s0[b] 'padding-left')) / ppb
-						a.0 += (parseFloat (s0[b] 'padding-right')) / ppb
+						a.2  = (parseFloat (s0[b] 'padding-right')) / ppb
+						a.0 += a.2
 						a.1  = (parseFloat (s0[b] 'padding-top')) / ppb
-						a.2  = (parseFloat (s0[b] 'padding-bottom')) / ppb
-						a.1 += a.2
+						a.3  = (parseFloat (s0[b] 'padding-bottom')) / ppb
+						a.1 += a.3
 						# determine grid gaps (set in ppbs)
 						a   = @gaps
 						a.0 = parseFloat (s0[b] '--col-gap')
 						a.1 = parseFloat (s0[b] '--row-gap')
 						# determine item dimensions
 						c = @block.cfg
-						if c.mode
+						if @block.layout.3
 							c = c.lines
 							d = 'line'
 						else
 							c = c.cards
 							d = 'card'
 						a   = @size
-						a.0 = c.0 or parseInt (s0[b] '--'+d+'-cols')
-						a.1 = c.1 or parseInt (s0[b] '--'+d+'-rows')
+						a.0 = c.0 or parseInt (s0[b] '--'+d+'-sx')
+						a.1 = c.1 or parseInt (s0[b] '--'+d+'-sy')
 						a.2 = a.0 + @gaps.0
 						a.3 = a.1 + @gaps.1
-						# resize is asynchroneous, so first,
-						# set minimal layout
+						# resize is asynchroneous operation, so,
+						# apply minimal layout
 						a = @block.cfg
 						@block.setLayout a.cols.0, a.rows.0
-						# create observer and feed it with root node,
-						# this makes first resize inevitable but not forced
+						# create observer after root node and
+						# force first resize
 						@obs = new ResizeObserver @resize
-						@obs.observe @block.root
+						@resize!
 					# }}}
 					getColsAndWidth: (w, e) -> # {{{
 						# prepare
@@ -1839,25 +1885,38 @@ w3ui = do ->
 						# done
 						return [a,b]
 					# }}}
-					finit: !-> # {{{
-						# destroy observer
-						@obs.disconnect!
-						@obs = null
-						# reset state
-						@ready = w3ui.promise!
-					# }}}
 				return {
+					defs: # configuration {{{
+						# grid container
+						# display mode: 0=cards (vertical), 1=lines (horizontal)
+						mode: 0
+						# dynamic layout: [min,max] 0=auto
+						cols: [1,4]
+						rows: [2,0]
+						# item grid
+						# static layout: [width,height]
+						# in ppbs numbers (1*ppb == 1*[--w3-size]px),
+						# 0=auto default (set in style file)
+						cards: [0,0]
+						lines: [0,0]
+						# records
+						# ordering tag and variant (0=asc, 1=desc, -1=none)
+						order: ['default',-1]
+						# should all the empty cells of the grid,
+						# at the last or at the first page,
+						# be filled with items from the opposite side?
+						wraparound: 1
+					# }}}
 					construct: (o) !-> # {{{
 						###
-						debugger
 						@item    = o.item or w3ui.grid
-						@buffer  = new blocks.buffer 100
+						@buffer  = new blocks.buffer!
 						@resizer = new Resizer @
 						@items   = []
 						# state
 						@layout  = [# initialized by resizer
-							0,0, # columns,rows
-							0,0  # columns*rows,mode
+							0,0, # columns, rows
+							0,0  # columns*rows, mode
 						]
 						@charged = 0
 						# traps
@@ -1870,19 +1929,16 @@ w3ui = do ->
 						events.attach @, e
 					# }}}
 					init: !-> # {{{
-						# initialize
-						# zap previous contents
-						a = @rootBox
-						while a.firstChild
-							a.removeChild a.lastChild
+						# initialize (in order)
 						# set display mode
 						@setMode @cfg.mode
-						# initialize resizer and buffer
+						# set layout and items
 						@resizer.init!
+						# set range offsets
 						@buffer.init!
-						# ...
-						#@total = -1
-						#@setRange 0
+					# }}}
+					lock: !-> # {{{
+						@console.debug 'locked == '+@locked
 					# }}}
 					setMode: (mode) !-> # {{{
 						# determine root class
@@ -1892,40 +1948,38 @@ w3ui = do ->
 						if mode
 							a = b
 							b = c
-						# set
+						# checkout and set
 						c = @root.classList
 						c.add a if not c.contains a
 						c.remove b if c.contains b
 						@layout.3 = mode
-						debugger
-						@console.debug 'mode='+a
+						@console.debug a
 					# }}}
-					setLayout: (cols, rows) -> # {{{
+					setLayout: (cols, rows) !-> # {{{
 						# prepare
 						layout = @layout
 						items  = @items
 						cols   = layout.0 if not cols
 						rows   = layout.1 if not rows
 						count  = cols * rows
-						# check changed
-						if layout.0 == cols and layout.1 == rows
-							return false
-						# check direction
-						if count > layout.2
-							# INCREASE
-							# {{{
-							# show more items
-							a = layout.2 - 1
-							debugger
+						# set items count
+						# {{{
+						if (a = layout.2) < count
+							# increase
+							--a
 							while ++a < count
-								if a < items.length
-									# reveal attached
-									items[a].root.classList.add 'v'
+								# get item
+								if b = items[a]
+									# set constructed
+									b.root.classList.add 'v'
 								else
-									# create and attach new item
-									items[a] = @item {className: 'item'}
-									# DOM assembly required
-									@rootBox.appendChild items[a].root
+									# construct and attach
+									items[a] = b = @item {className: 'item'}
+									@rootBox.appendChild b.root
+									# initialize constructed
+									b.init!
+							###
+							# JUNKYARD {{{
 							/***
 							# update buffer offsets
 							# determine initial shift size and direction
@@ -1959,12 +2013,18 @@ w3ui = do ->
 								a[c].root.classList.add 'v'
 							/***/
 							# }}}
-						else if count < layout.2
-							# DECREASE
-							# hide redundant (dont destroy)
-							a = layout.2 + 1
-							while --a > count
+							###
+						else if a > count
+							# decrease
+							while --a >= count
+								# set deconstructed
 								items[a].root.classList.remove 'v'
+							###
+						# }}}
+						# set columns/rows count
+						# {{{
+						if layout.0 == cols and layout.1 == rows
+							return false
 						# update values
 						a = @root.style
 						if layout.0 != cols
@@ -1972,10 +2032,10 @@ w3ui = do ->
 						if layout.1 != rows
 							a.setProperty '--rows', (layout.1 = rows)
 						@layout.2 = count
-						# callback
+						# callback and complete
 						@onChange @, 'layout' if @onChange
+						# }}}
 						# done
-						return true
 					# }}}
 					setOffset: (i) -> # {{{
 						###
@@ -2001,27 +2061,6 @@ w3ui = do ->
 						###
 						i = @buffer.set record
 						###
-					# }}}
-					defs: # {{{
-						# grid container
-						# display mode: 0=cards (vertical), 1=lines (horizontal)
-						mode: 0
-						# dynamic layout: [min,max] 0=auto
-						cols: [1,4]
-						rows: [2,0]
-						# item grid
-						# static layout: [width,height]
-						# in ppbs numbers (1*ppb == 1*[--w3-size]px),
-						# 0=auto default (set in style file)
-						cards: [0,0]
-						lines: [0,0]
-						# records
-						# ordering tag and variant (0=asc, 1=desc, -1=none)
-						order: ['default',-1]
-						# should all the empty cells of the grid,
-						# at the last or at the first page,
-						# be filled with items from the opposite side?
-						wraparound: 1
 					# }}}
 				}
 			# }}}
@@ -2464,19 +2503,18 @@ w3ui = do ->
 				# }}}
 				SuperVisor = (o) !->
 					# {{{
+					@console = o.console
 					@root    = o.root
 					@brand   = o.brand
-					@console = o.console
-					@slave   = o.s
-					@master  = o.m
+					@map     = o.blocks
 					@fetch   = w3fetch.create {
-						baseUrl: o.apiURL
+						baseUrl: o.api
 						mounted: true
 						notNull: true
 						method: 'POST'
 					}
 					@stream  = w3fetch.create {
-						baseUrl: o.apiURL
+						baseUrl: o.api
 						mounted: true
 						notNull: true
 						method: 'POST'
@@ -2634,28 +2672,31 @@ w3ui = do ->
 				return (o, autoloop = true) ->>
 					# CHECK {{{
 					# create console
-					o.brand = o.brand or 'w3catalog'
+					o.brand = o.brand or 'catalog'
 					console = o.console = w3ui.console.new o.brand
 					console.log 'new supervisor'
 					# check requirements
 					if not w3fetch
 						console.error 'missing requirement: w3fetch'
 						return null
+					if not o.api
+						console.error 'stateless: no api endpoint'
+						return null
 					# }}}
 					# CONSTRUCT {{{
 					# prepare
-					sup     = new SuperVisor o
-					root    = sup.root
-					blocks  = sup.blocks
-					groups  = sup.groups
-					time    = performance.now!
+					sup    = new SuperVisor o
+					root   = sup.root
+					blocks = sup.blocks
+					groups = sup.groups
+					time   = performance.now!
 					# create groups
-					for a in stateGroups when b = sup.master[a]
+					for a in stateGroups when b = sup.map[a]
 						b = w3ui.blocks.group a, groupLevel[a], sup, b
 						groups[*] = b if b
 					# check empty
 					if not groups.length
-						console.error 'nothing to supervise'
+						console.error 'stateless: no state blocks'
 						return null
 					# collect blocks (push in)
 					for a in groups
@@ -2685,24 +2726,26 @@ w3ui = do ->
 							console.error 'failed to fetch configuration'
 							console.debug a
 							return null
-						# set
+						# apply merge filter
 						sup.config = w3ui.merge a, configGroups
-					# set state
+					# prevent fails
 					try
-						# initialize groups (ordered),
-						# blocks will inject state values
+						# initialize groups (in order),
+						# blocks inject state
 						for a in groups
 							a.init!
-						# sync groups afterwards
+						# sync afterwards,
+						# blocks read injected state
 						for a in groups
 							a.sync!
 					catch e
+						# unexpected expected
 						console.error a.name+' group failed'
 						console.debug e
 						return null
-					# set roots constructed
-					for a in blocks when a.root
-						a.root.classList.add 'v'
+					# unlock
+					for a in blocks
+						a.lock 0
 					# report
 					timed = performance.now!
 					console.log 'initialized ('+((timed - time).|.0)+'ms)'

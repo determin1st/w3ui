@@ -1,0 +1,432 @@
+// helpers {{{
+cv(c)
+	s('%s,%s,%s', red(c), green(c), blue(c));
+rgba(cv,alpha=1)
+	s('rgba(%s,%s)', cv, alpha);
+a-text-overflow()
+	text-overflow: ellipsis
+	overflow:      hidden
+	white-space:   nowrap
+	word-break:    break-all
+	overflow-wrap: anywhere // modern word-break
+a-container(xpad=0,ypad=0)
+	box-sizing: border-box
+	min-width: 0
+	min-height: 0
+	margin-top: 0
+	margin-right: 0
+	margin-bottom: 0
+	margin-left: 0
+	padding-top: ypad
+	padding-right: xpad
+	padding-bottom: ypad
+	padding-left: xpad
+	outline-width: 0
+	border-width: 0
+	background-color: transparent
+// }}}
+:root // unique block system variables {{{
+	// SIZE
+	--w3-ppb: 48px // [p]ixels [p]er [b]lock
+	--w3-factor: 1 // ppb factor (100% by default)
+	--w3-size: calc(var(--w3-ppb) * var(--w3-factor))
+	--sm-font-size: calc(0.3334 * var(--w3-size))
+	// COLORS
+	// frame
+	--sm-color-0: cv(black)
+	--sm-color-1: cv(white)
+	// container
+	--sm-color-2: cv(silver)
+	--sm-color-3: cv(gainsboro)
+	// item
+	--sm-color-4: cv(darkslategray)
+	--sm-color-5: cv(slategray)
+	// highlight
+	--sm-color-6: cv(darkslateblue)
+	--sm-color-7: cv(slateblue)
+	// FONTS
+	--sm-font-title: 'Times', 'Times New Roman', serif
+	--sm-font-label: 'Arial Black', 'Arial Bold', 'Gadget', sans-serif
+	--sm-font-input: 'Consolas', 'Courier', monospace
+// }}}
+.w3ui
+	// root {{{
+	// it is assumed that frame dimensions are set in relative "em" units,
+	// horizontal or vertical - doesn't matter,
+	// inheritance is also assumed, should be re-defined for content
+	font-size: var(--w3-size)
+	display: block
+	position: relative
+	a-container(0.0833em, 0.0416em) // 4px,2px common paddings
+	> div
+		display: none
+		box-sizing: border-box
+		position: relative
+		a-container()
+		opacity: 0
+		overflow: hidden
+		pointer-events: none
+	> svg
+		display: block
+		box-sizing: border-box
+		position: absolute // covers unconstructed root
+		top: 0
+		left: 0
+		width: 100%
+		height: 100%
+		fill: rgba(var(--sm-color-3))
+	///
+	// constructed
+	&.v
+		box-shadow: inset 0 0 0.0833em 0.0208em rgba(var(--sm-color-0), 0.5)
+		> svg
+			display: none
+		> div
+			display: block
+			opacity: 0.5
+			///
+			// functional
+			&.v
+				opacity: 1
+				pointer-events: auto
+	///
+	// focused
+	&.v.f
+		box-shadow: inset 0 0 0.0833em 0.0208em rgba(var(--sm-color-7), 0.5)
+	////
+	// }}}
+	// generic {{{
+	div,button,select,input,label,svg,img,hr,h1,h2,h3
+		a-container()
+	button,input,optgroup,select,textarea,label,h3
+		font-family: inherit
+		font-size:   var(--sm-font-size)
+		font-weight: bold
+		line-height: 1.25
+		outline-width: 0
+		text-transform: none
+		text-decoration: none
+		a-text-overflow()
+		&:focus
+			outline-width: 0
+	svg
+		display: block
+		width: 100%
+		height: 100%
+		shape-rendering: geometricPrecision
+	button
+		cursor: pointer
+		color: transparent
+		> svg
+			fill: transparent
+			stroke: transparent
+	// }}}
+	/**/
+	&.gridlist // {{{
+		// configuration
+		// primary container (grid of grids)
+		--cols: 1
+		--rows: 1
+		--col-gap: 0.1666em // 8px
+		--row-gap: 0.3333em // 16px
+		// secondary containers (all item types)
+		// item sized in ppbs (1*ppb == 1*(--w3-size))
+		--card-sx: 5
+		--card-sy: 7
+		--line-sx: 13
+		--line-sy: 3
+		&.cards
+			--item-sx: var(--card-sx)
+			--item-sy: var(--card-sy)
+			--item-w: calc(1em * var(--card-sx))
+			--item-h: calc(1em * var(--card-sy))
+			--max-width: calc(
+				var(--cols) * (var(--item-w) + var(--col-gap)) - \
+				var(--col-gap)
+			)
+		&.lines
+			--item-sx: var(--line-sx)
+			--item-sy: var(--line-sy)
+			--item-w: 100%
+			--item-h: calc(1em * var(--line-sy))
+			--max-width: 100%
+		////
+		width: 100% // try to eat all the width (observed)
+		height: auto // autogrows, determined
+		display: flex // for horizontal alignment
+		flex-direction: row // tested! others doesnt work stable
+		align-items: stretch // grid eats all height
+		justify-content: center // configurabable
+		// custom paddings
+		padding-top: 0.0833em
+		padding-right: 0
+		padding-bottom: 0.0833em
+		padding-left: 0
+		&.v > div
+			display: grid
+		> div
+			// PRIMARY: items grid
+			width: 100%
+			max-width: var(--max-width) // have to be limited
+			height: auto // determined
+			/*
+			height: calc(
+				var(--rows) * (var(--item-h) + var(--row-gap)) - \
+				var(--row-gap)
+			)
+			*/
+			flex: 1 1 0
+			grid-template-columns: repeat(var(--cols), var(--item-w))
+			grid-template-rows: repeat(var(--rows), var(--item-h))
+			grid-column-gap: var(--col-gap)
+			grid-row-gap: var(--row-gap)
+			contain: strict // optimize?
+			> .item
+				// item's container
+				width: var(--item-w) // limited or 100%
+				height: auto // determined
+				display: none // not displayed by default
+				box-shadow: none // not standard container
+				> div
+					// SECONDARY: item's grid (sectionated)
+					// determined dimensions
+					width: var(--item-w)
+					height: var(--item-h)
+					display: grid
+					grid-template-columns: repeat(var(--item-sx), 1em)
+					grid-template-rows: repeat(var(--item-sy), 1em)
+					grid-column-gap: 0 // solid
+					grid-row-gap: 0 // solid
+					justify-self: stretch // width=100%
+					align-self: stretch // height=100%
+					contain: strict // optimize?
+					> div
+						// tertiary,
+						// section's container
+						padding: 0.0416em // 2px
+						> div
+							display: none
+						> svg
+							display: block
+				// item states
+				&.v
+					// initialized
+					display: block
+					> div.v.x
+						// content is visible only
+						// when constructed and loaded
+						> div
+							display: block
+						> svg
+							display: none
+	// }}}
+	&.gridlist.cards // {{{
+		> div > .item > div
+			&.image // {{{
+				display: flex
+				flex-direction: row
+				align-items: center
+				justify-content: center
+				> img
+					flex: 1 0 0
+					width:  100%
+					height: 100%
+					max-width:  100%
+					max-height: 100%
+					display: none
+				> svg
+					flex: 1 1 0
+					width:  100%
+					height: 100%
+					display: block
+				&.v
+					> img
+						display: block
+					> svg
+						display: none
+			// }}}
+			&.title // {{{
+				order: 1
+				flex: 0 0 0
+				min-height: 3.45em
+				padding-bottom: 0.4em
+				> div
+					height: 100%
+					display: flex
+					align-items: center
+					justify-content: center
+					font-family: var(--sm-font-label)
+					font-size: 1.1em
+					font-weight: bold
+					line-height: 1
+					text-align: center
+					word-break: keep-all // +to break-word Asian languages
+					owerflow-break: keep-all // +to break-word Asian languages
+					overflow: hidden
+					color: black
+			// }}}
+			&.price // {{{
+				order: 0
+				max-height: 2.2em
+				display: flex
+				flex-direction: row
+				align-items: stretch
+				justify-content: center
+				padding-bottom: 0.4em
+				> div
+					flex: 0 0 auto
+					display: flex
+					flex-direction: row
+					align-items: flex-end
+					line-height: 1
+				> .currency
+					justify-content: flex-end
+					font-family: var(--sm-font-label)
+					font-size: 1.8em
+					padding-right: 0.15em
+					color: slategray
+				> .pad
+					flex: 1 1 0
+				> .value
+					> div
+						font-family: var(--sm-font-label)
+						text-overflow: ellipsis
+						overflow:      hidden
+						white-space:   nowrap
+						word-break:    break-all
+						overflow-wrap: anywhere // modern word-break
+					&.a
+						justify-content: center
+						padding-bottom: 0.14em
+						> .integer
+							font-size: 1.4em
+							color: darkslategray
+						> .fraction
+							font-size: 1.2em
+							color: slategray
+							padding-bottom: 0.03em
+					&.b
+						flex: 0 1 auto
+						padding-left: 1em
+						padding-bottom: 0.25em
+						text-decoration: line-through
+						text-decoration-color: darkslategray
+						> .integer
+							font-size: 1em
+							color: slategray
+						> .fraction
+							font-size: 0.8em
+							color: slategray
+							padding-bottom: 0.1em
+				////
+				&.equal
+					> .value.b > div
+						display: none
+			// }}}
+			&.actions // {{{
+				font-size: calc(var(--item-h) * var(--c-size) / 100)
+				display: flex
+				flex-direction: row
+				gap: 4px
+				// base
+				> button
+					flex: 1 1 0
+				// specific
+				> button.add // {{{
+					flex: 0 0 0
+					size = 0.917em // 44px
+					padY = (1 - size) / 2
+					padX = 0.125em
+					bord = 0.025em
+					min-width: size + 2*padX + 2*bord
+					//min-width: 0em // 0.917 + pad + border(2*0.025)
+					//padding: 0.0415em 0.083em 0.0415em 0.083em
+					padding: padY padX padY padX
+					> svg
+						width:  100%
+						height: 100%
+						display: block
+						> text
+							//font-size: 0.375em
+							font-size: 0.417em
+							//font-size: 0.458em
+							font-family: var(--sm-font-label)
+							font-weight: bold
+							fill: transparent
+						> .a
+							fill: rgba(var(--sm-color-4), 0.75)
+						> .b
+							fill: rgba(var(--sm-color-5))
+						> .c
+							fill: rgba(var(--sm-color-5), 0.5)
+						> .d
+							font-size: 0.458em
+						> .e
+							fill: transparent
+					&.v
+						&.h > svg
+							> .b
+								fill: rgba(var(--sm-color-4), 0.75)
+							> .c
+								fill: rgba(var(--sm-color-1), 0.25)
+							> .d
+								fill: rgba(var(--sm-color-0))
+						&.f > svg
+							> .a
+								fill: rgba(var(--sm-color-6), 0.65)
+							> .c
+								fill: rgba(var(--sm-color-7), 0.25)
+							//> .d
+							//	fill: rgba(var(--sm-color-7))
+						&.f.h > svg
+							> .c
+								fill: rgba(var(--sm-color-7), 0.125)
+							> .d
+								fill: rgba(var(--sm-color-7))
+						&.w > svg,
+						&.w.f > svg
+							> .a
+								fill: rgba(var(--sm-color-2))
+							> .b
+								fill: rgba(var(--sm-color-2))
+							> .c
+								fill: rgba(var(--sm-color-7), 0.125)
+							> .d
+								fill: transparent
+						&.x > svg
+							> .c
+								fill: rgba(var(--sm-color-1), 0.4)
+							> .d
+								fill: transparent
+							> .e
+								fill: rgba(var(--sm-color-0))
+						&.x.h > svg
+							> .c
+								fill: rgba(var(--sm-color-1), 0.25)
+							> .e
+								fill: rgba(var(--sm-color-5))
+						&.x.f > svg
+							> .c
+								fill: rgba(var(--sm-color-7), 0.15)
+							> .e
+								fill: rgba(var(--sm-color-6))
+						&.x.f.h > svg
+							> .d
+								fill: transparent
+						&.x.w > svg,
+						&.x.w.f > svg
+							> .e
+								fill: rgba(var(--sm-color-7))
+				// }}}
+			// }}}
+		////
+	// }}}
+	&.gridlist.lines // {{{
+		> div > .item > div
+			&.image // {{{
+				display: flex
+			// }}}
+		////
+	// }}}
+	/**/
+/***/

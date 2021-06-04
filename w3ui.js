@@ -40,7 +40,7 @@ w3ui = function(){
     Console.prototype = {
       console: console,
       isdebug: true,
-      styles: ['font-weight:bold;color:skyblue', 'color:aquamarine', 'color:violet', 'color:slategray'],
+      styles: ['font-weight:bold;color:skyblue', 'color:aquamarine', 'color:violet', 'color:slateblue', 'color:slategray'],
       'new': function(brand){
         return new Console(this.brand + ':' + brand);
       },
@@ -64,13 +64,13 @@ w3ui = function(){
           if (typeof e === 'string') {
             m += '%c' + e;
             if (arguments.length === 1) {
-              this.console.log(m, s[0], s[3]);
+              this.console.log(m, s[3], s[4]);
             } else {
               ok = typeof ok === 'string'
                 ? ok
                 : (ok && 'ok') || '';
               m += '.. %c' + ok;
-              this.console.log(m, s[0], s[3], s[1]);
+              this.console.log(m, s[3], s[4], s[1]);
             }
           } else {
             this.console.log(e);
@@ -557,10 +557,30 @@ w3ui = function(){
           this.cfg = o.cfg;
           this.focused = this.hovered = 0;
           this.locked = 1;
+          this.init = this.init(map.init);
+          this.lock = this.lock(map.lock);
           for (a in map) {
-            this[a] = map[a];
+            if (!this.hasOwnProperty(a)) {
+              this[a] = map[a];
+            }
           }
           this.construct(o);
+        };
+        Block.prototype = {
+          init: function(func){
+            var this$ = this;
+            return function(){
+              func.call(this$);
+              this$.root.classList.add('v');
+            };
+          },
+          lock: function(func){
+            var this$ = this;
+            return function(v){
+              this$.rootBox.classList.toggle('v', !(this$.locked = v));
+              func.call(this$, v);
+            };
+          }
         };
         return function(name, map){
           if (typeof map === 'function') {
@@ -568,7 +588,7 @@ w3ui = function(){
           }
           map = w3ui.metaconstruct(map);
           return function(o){
-            var a, b, c, i$, ref$, len$, d, console, e;
+            var a, b, c, i$, ref$, len$, d, e;
             a = o.root
               ? o.root.className
               : o.className;
@@ -582,36 +602,31 @@ w3ui = function(){
                 }
               }
             }
-            if (c.length) {
-              d = o.hasOwnProperty('debug') ? !!o.debug : true;
-              a = c.join(':');
-              console = w3ui.console['new'](a, d);
-            } else {
-              console = w3ui.console;
-            }
             o.console = console;
-            debugger;
-            o.className = a = (c.concat(b)).join(' ');
+            if (c.length) {
+              a = c.slice(0, 2).join(':');
+              o.console = console['new'](a);
+            }
+            o.className = a = (b.concat(c)).join(' ');
             if (o.root) {
               if ((b = o.root).className !== a) {
                 o.root.className = a;
               }
-              if (!b.firstChild) {
+              if (!(c = b.firstChild)) {
                 c = document.createElement('div');
                 b.appendChild(c);
-              } else if (c = b.innerHTML) {
-                while (b.firstChild) {
-                  b.removeChild(b.lastChild);
+              } else if (a = c.innerHTML) {
+                while (c.firstChild) {
+                  c.removeChild(c.lastChild);
                 }
-                if (c.length > 9) {
+                if (a.length > 9) {
                   try {
-                    a = c.slice(4, c.length - 3);
-                    a = JSON.parse(a);
-                    c = a;
+                    c = a.slice(4, a.length - 3);
+                    c = JSON.parse(c);
                   } catch (e$) {
                     e = e$;
-                    console.error('incorrect SSR output (JSON-in-HTML)');
-                    console.debug(c);
+                    o.console.error('incorrect SSR input (JSON-in-HTML)');
+                    o.console.debug(a);
                     c = {};
                   }
                   o.cfg = o.cfg ? Object.assign(c, o.cfg) : c;
@@ -649,7 +664,6 @@ w3ui = function(){
       group: function(){
         var Block, Group;
         Block = function(root, group, o){
-          var this$ = this;
           this.root = root;
           this.rootBox = root.firstChild;
           this.level = o.hasOwnProperty('level')
@@ -657,18 +671,41 @@ w3ui = function(){
             : group.level;
           this.config = group['super'].config;
           this.state = group['super'].state;
-          this.locked = 1;
-          this.init = o.init;
           this.sync = o.sync;
           this.check = o.check || null;
-          this.charge = function(){
-            group.sync(this$);
-            if (this$.level) {
-              group['super'].charge(this$);
-            }
-          };
-          if (o.construct) {
-            o.construct.call(this);
+          this.charge = this.charge(group);
+          this.locked = 1;
+          if (o.construct.call(this)) {
+            this.init = this.init(o.init);
+            this.lock = this.lock(o.lock);
+          } else {
+            this.init = o.init;
+            this.lock = o.lock;
+          }
+        };
+        Block.prototype = {
+          init: function(func){
+            var this$ = this;
+            return function(){
+              func.call(this$);
+              this$.root.classList.add('v');
+            };
+          },
+          lock: function(func){
+            var this$ = this;
+            return function(v){
+              this$.rootBox.classList.toggle('v', !(this$.locked = v));
+              func.call(this$, v);
+            };
+          },
+          charge: function(group){
+            var this$ = this;
+            return function(){
+              group.sync(this$);
+              if (this$.level && !this$.locked) {
+                group['super'].charge(this$);
+              }
+            };
           }
         };
         Group = function(name, level, sup){
@@ -727,7 +764,7 @@ w3ui = function(){
       }(),
       buffer: function(){
         var Block;
-        Block = function(size){
+        Block = function(){
           this.total = -1;
           this.bufA = [];
           this.bufB = [];
@@ -1616,7 +1653,7 @@ w3ui = function(){
           this.rootCS = null;
           this.rootBoxCS = null;
           this.ppb = 0;
-          this.pads = [0, 0, 0];
+          this.pads = [0, 0, 0, 0];
           this.gaps = [0, 0];
           this.size = [0, 0, 0, 0];
           this.factor = 1;
@@ -1647,6 +1684,10 @@ w3ui = function(){
               }
             }
             this$.block.setLayout(a);
+            if (this$.ready.pending) {
+              this$.ready.resolve();
+              this$.obs.observe(this$.block.root);
+            }
             return true;
           }, 300, 10);
         };
@@ -1654,7 +1695,9 @@ w3ui = function(){
           init: function(){
             var s0, s1, ppb, a, b, c, d;
             if (this.obs) {
-              this.finit();
+              this.obs.disconnect();
+              this.obs = null;
+              this.ready = w3ui.promise();
             }
             this.rootCS = s0 = getComputedStyle(this.block.root);
             this.rootBoxCS = s1 = getComputedStyle(this.block.rootBox);
@@ -1662,15 +1705,16 @@ w3ui = function(){
             a = this.pads;
             b = 'getPropertyValue';
             a[0] = parseFloat(s0[b]('padding-left')) / ppb;
-            a[0] += parseFloat(s0[b]('padding-right')) / ppb;
+            a[2] = parseFloat(s0[b]('padding-right')) / ppb;
+            a[0] += a[2];
             a[1] = parseFloat(s0[b]('padding-top')) / ppb;
-            a[2] = parseFloat(s0[b]('padding-bottom')) / ppb;
-            a[1] += a[2];
+            a[3] = parseFloat(s0[b]('padding-bottom')) / ppb;
+            a[1] += a[3];
             a = this.gaps;
             a[0] = parseFloat(s0[b]('--col-gap'));
             a[1] = parseFloat(s0[b]('--row-gap'));
             c = this.block.cfg;
-            if (c.mode) {
+            if (this.block.layout[3]) {
               c = c.lines;
               d = 'line';
             } else {
@@ -1678,14 +1722,14 @@ w3ui = function(){
               d = 'card';
             }
             a = this.size;
-            a[0] = c[0] || parseInt(s0[b]('--' + d + '-cols'));
-            a[1] = c[1] || parseInt(s0[b]('--' + d + '-rows'));
+            a[0] = c[0] || parseInt(s0[b]('--' + d + '-sx'));
+            a[1] = c[1] || parseInt(s0[b]('--' + d + '-sy'));
             a[2] = a[0] + this.gaps[0];
             a[3] = a[1] + this.gaps[1];
             a = this.block.cfg;
             this.block.setLayout(a.cols[0], a.rows[0]);
             this.obs = new ResizeObserver(this.resize);
-            this.obs.observe(this.block.root);
+            this.resize();
           },
           getColsAndWidth: function(w, e){
             var a, b, c;
@@ -1707,19 +1751,22 @@ w3ui = function(){
               }
             }
             return [a, b];
-          },
-          finit: function(){
-            this.obs.disconnect();
-            this.obs = null;
-            this.ready = w3ui.promise();
           }
         };
         return {
+          defs: {
+            mode: 0,
+            cols: [1, 4],
+            rows: [2, 0],
+            cards: [0, 0],
+            lines: [0, 0],
+            order: ['default', -1],
+            wraparound: 1
+          },
           construct: function(o){
-            debugger;
             var e;
             this.item = o.item || w3ui.grid;
-            this.buffer = new blocks.buffer(100);
+            this.buffer = new blocks.buffer();
             this.resizer = new Resizer(this);
             this.items = [];
             this.layout = [0, 0, 0, 0];
@@ -1736,14 +1783,12 @@ w3ui = function(){
             events.attach(this, e);
           },
           init: function(){
-            var a;
-            a = this.rootBox;
-            while (a.firstChild) {
-              a.removeChild(a.lastChild);
-            }
             this.setMode(this.cfg.mode);
             this.resizer.init();
             this.buffer.init();
+          },
+          lock: function(){
+            this.console.debug('locked == ' + this.locked);
           },
           setMode: function(mode){
             var a, b, c;
@@ -1762,11 +1807,10 @@ w3ui = function(){
               c.remove(b);
             }
             this.layout[3] = mode;
-            debugger;
-            this.console.debug('mode=' + a);
+            this.console.debug(a);
           },
           setLayout: function(cols, rows){
-            var layout, items, count, a;
+            var layout, items, count, a, b;
             layout = this.layout;
             items = this.items;
             if (!cols) {
@@ -1776,20 +1820,17 @@ w3ui = function(){
               rows = layout[1];
             }
             count = cols * rows;
-            if (layout[0] === cols && layout[1] === rows) {
-              return false;
-            }
-            if (count > layout[2]) {
-              a = layout[2] - 1;
-              debugger;
+            if ((a = layout[2]) < count) {
+              --a;
               while (++a < count) {
-                if (a < items.length) {
-                  items[a].root.classList.add('v');
+                if (b = items[a]) {
+                  b.root.classList.add('v');
                 } else {
-                  items[a] = this.item({
+                  items[a] = b = this.item({
                     className: 'item'
                   });
-                  this.rootBox.appendChild(items[a].root);
+                  this.rootBox.appendChild(b.root);
+                  b.init();
                 }
               }
               /***
@@ -1824,11 +1865,13 @@ w3ui = function(){
               	a[c].set b
               	a[c].root.classList.add 'v'
               /***/
-            } else if (count < layout[2]) {
-              a = layout[2] + 1;
-              while (--a > count) {
+            } else if (a > count) {
+              while (--a >= count) {
                 items[a].root.classList.remove('v');
               }
+            }
+            if (layout[0] === cols && layout[1] === rows) {
+              return false;
             }
             a = this.root.style;
             if (layout[0] !== cols) {
@@ -1841,7 +1884,6 @@ w3ui = function(){
             if (this.onChange) {
               this.onChange(this, 'layout');
             }
-            return true;
           },
           setOffset: function(i){
             this.offset[0] = a;
@@ -1859,15 +1901,6 @@ w3ui = function(){
           setItem: function(record){
             var i;
             return i = this.buffer.set(record);
-          },
-          defs: {
-            mode: 0,
-            cols: [1, 4],
-            rows: [2, 0],
-            cards: [0, 0],
-            lines: [0, 0],
-            order: ['default', -1],
-            wraparound: 1
           }
         };
       }),
@@ -2300,19 +2333,18 @@ w3ui = function(){
         });
         stateGroups = Object.getOwnPropertyNames(groupLevel);
         SuperVisor = function(o){
+          this.console = o.console;
           this.root = o.root;
           this.brand = o.brand;
-          this.console = o.console;
-          this.slave = o.s;
-          this.master = o.m;
+          this.map = o.blocks;
           this.fetch = w3fetch.create({
-            baseUrl: o.apiURL,
+            baseUrl: o.api,
             mounted: true,
             notNull: true,
             method: 'POST'
           });
           this.stream = w3fetch.create({
-            baseUrl: o.apiURL,
+            baseUrl: o.api,
             mounted: true,
             notNull: true,
             method: 'POST',
@@ -2457,11 +2489,15 @@ w3ui = function(){
         return async function(o, autoloop){
           var console, sup, root, blocks, groups, time, i$, ref$, len$, a, b, j$, len1$, timed, e;
           autoloop == null && (autoloop = true);
-          o.brand = o.brand || 'w3catalog';
+          o.brand = o.brand || 'catalog';
           console = o.console = w3ui.console['new'](o.brand);
           console.log('new supervisor');
           if (!w3fetch) {
             console.error('missing requirement: w3fetch');
+            return null;
+          }
+          if (!o.api) {
+            console.error('stateless: no api endpoint');
             return null;
           }
           sup = new SuperVisor(o);
@@ -2471,7 +2507,7 @@ w3ui = function(){
           time = performance.now();
           for (i$ = 0, len$ = (ref$ = stateGroups).length; i$ < len$; ++i$) {
             a = ref$[i$];
-            if (b = sup.master[a]) {
+            if (b = sup.map[a]) {
               b = w3ui.blocks.group(a, groupLevel[a], sup, b);
               if (b) {
                 groups[groups.length] = b;
@@ -2479,7 +2515,7 @@ w3ui = function(){
             }
           }
           if (!groups.length) {
-            console.error('nothing to supervise');
+            console.error('stateless: no state blocks');
             return null;
           }
           for (i$ = 0, len$ = groups.length; i$ < len$; ++i$) {
@@ -2529,9 +2565,7 @@ w3ui = function(){
           }
           for (i$ = 0, len$ = blocks.length; i$ < len$; ++i$) {
             a = blocks[i$];
-            if (a.root) {
-              a.root.classList.add('v');
-            }
+            a.lock(0);
           }
           timed = performance.now();
           console.log('initialized (' + (timed - time | 0) + 'ms)');
